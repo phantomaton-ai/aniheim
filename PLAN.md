@@ -1,68 +1,112 @@
-# Aniheim Code Plan 📋⚙️
+# Aniheim Code Plan 📋⚙️ (Revision 2)
 
 This document outlines the file structure and interfaces for the Aniheim Rendering Engine build tool, based on `DESIGN.md` (Revision 4).
 
 ## Core Concepts
 
-*   **Build Tool:** A Node.js application that reads source Markdown files and outputs a self-contained HTML animation player.
-*   **Directive-Driven:** Uses `smarkup` for syntax and `necronomicon` for processing directives found in Markdown files.
-*   **Asset Generation:** Generates necessary assets (audio, music sheets, config JSONs, artwork definitions) via LLM prompts and external tools if they don't exist. Regeneration is triggered by deleting the target file.
-*   **Runtime:** The output HTML contains bundled JavaScript code for animation playback, rendering, and audio.
+*   **Build Tool:** Node.js app (`build.js`) processing linked Markdown files.
+*   **Contextual Processing:** Uses separate `necronomicon` setups for different file types (episode, scene, character, etc.).
+*   **Asset Generation:** Focuses build-time generation on binary assets (MP3 voice/music). Text assets (`.abc`, `.json`, `artwork.md`) are expected to exist (generated upstream by LLM); build fails with clear errors if missing. Regeneration via manual file deletion.
+*   **Runtime:** Self-contained HTML with bundled JS for playback. Expression evaluation happens at runtime.
 
 ## File Structure
 
 ```
 aniheim/
-├── build.js                # CLI Entry Point & Orchestration
+├── build.js                # CLI Entry Point
 ├── src/
 │   ├── build/              # Build-time logic
-│   │   ├── commands/       # Necronomicon command definitions
-│   │   │   ├── scene.js
-│   │   │   ├── character.js
-│   │   │   ├── music.js
-│   │   │   ├── background.js
-│   │   │   ├── artwork.js
-│   │   │   ├── score.js
-│   │   │   ├── voice.js
-│   │   │   ├── move.js
-│   │   │   ├── animate.js
-│   │   │   ├── dialog.js
-│   │   │   └── index.js    # Exports all commands list
-│   │   ├── process.js      # Necronomicon execution wrapper
-│   │   ├── generate/       # Asset generation helpers
-│   │   │   ├── settings.js # Voice settings JSON generation
-│   │   │   ├── voice.js    # TTS MP3 generation
-│   │   │   ├── score.js    # ABC generation
-│   │   │   ├── music.js    # ABC -> MP3 generation
-│   │   │   ├── artwork.js  # artwork.md generation
-│   │   │   └── llm.js      # LLM interaction helper
-│   │   ├── parse/          # Specific format parsers
-│   │   │   └── artwork.js  # artwork.md microformat -> shape def list
-│   │   └── emit.js         # HTML emitter/bundler
-│   └── runtime/            # Code to be bundled into the output HTML
-│       ├── index.js        # Entry point for runtime bundle
-│       ├── player.js       # Main player loop state manager
-│       ├── render.js       # Canvas 2D rendering implementation
-│       ├── audio.js        # Audio management (Howler.js wrapper)
-│       ├── evaluate.js     # Expression evaluator (`expr` attributes)
-│       ├── state.js        # Manages character pose/expression/position state
-│       └── data.js         # Placeholder for injected episode data
+│   │   ├── episode/
+│   │   │   ├── commands/
+│   │   │   │   └── scene.js    # Handles /scene directive
+│   │   │   └── process.js      # Processes episode.md
+│   │   ├── scene/
+│   │   │   ├── commands/       # Commands valid within scene.md
+│   │   │   │   ├── background.js
+│   │   │   │   ├── character.js
+│   │   │   │   ├── music.js
+│   │   │   │   ├── move.js
+│   │   │   │   ├── animate.js
+│   │   │   │   └── dialog.js
+│   │   │   └── process.js      # Processes scene.md
+│   │   ├── character/
+│   │   │   ├── commands/       # Commands valid within character.md
+│   │   │   │   ├── voice.js
+│   │   │   │   └── artwork.js  # Links to artwork.md
+│   │   │   └── process.js      # Processes character.md
+│   │   ├── music/
+│   │   │   ├── commands/       # Command valid within music.md
+│   │   │   │   └── score.js
+│   │   │   └── process.js      # Processes music.md
+│   │   ├── background/
+│   │   │   ├── commands/       # Command valid within background.md
+│   │   │   │   └── artwork.js  # Links to artwork.md
+│   │   │   └── process.js      # Processes background.md
+│   │   ├── artwork/
+│   │   │   ├── commands/       # Commands valid within artwork.md
+│   │   │   │   ├── ellipse.js
+│   │   │   │   └── polygon.js
+│   │   │   ├── parse.js        # Parses artwork.md -> Artwork structure
+│   │   │   └── process.js      # Processes artwork.md
+│   │   ├── generate/           # Binary asset generation
+│   │   │   ├── voice.js        # TTS MP3 generation
+│   │   │   └── music.js        # ABC -> MP3 generation
+│   │   ├── state.js          # Shared build state object definition
+│   │   └── emit.js             # HTML emitter/bundler
+│   ├── runtime/                # Code bundled into output HTML
+│   │   ├── index.js            # Entry point
+│   │   ├── player.js           # Main loop & event processor
+│   │   ├── render.js           # Canvas 2D renderer
+│   │   ├── audio.js            # Audio manager (Howler.js)
+│   │   ├── evaluate.js         # Runtime expression evaluator
+│   │   ├── state.js            # Runtime state manager (interpolation)
+│   │   ├── interpolate.js      # Lerp function
+│   │   └── data.js             # Injected episode data
+│   └── data/                   # Static definitions (managed via source control)
+│       ├── emoji_map.json
+│       ├── pose_definitions.json
+│       └── expression_definitions.json
 ├── package.json
 ├── PLAN.md
 ├── DESIGN.md
-├── config/                 # Static configuration data
-│   ├── emoji_map.json
-│   ├── pose_definitions.json
-│   └── expression_definitions.json
 ```
 
-/comment(user:woe) {
-    Let's organize commands a little bit differently. For example, the `/scene` command is only going to get executed in the context of an episode, so I'd put that somewhere like `episodes/commands/scenes`. In practice, I think we have a few different "necronomicon wrappers" in the sense that we have a few different file types (and associated directive sets) which we'll support.
+## Definitions (Build Time)
 
-    Similarly, `config` is the wrong idea for poses/expressions. Those will be globally reused, but we'll want to iterate on them via LLM interactions in much the same way as everything else. Those should live under the `/src` hierarchy somewhere.
-
-    I do like the split between `build` and `runtime`, so let's retain that.
-}
+*   **`Cutout` (Render Time):** Represents a fully calculated shape ready for drawing.
+    ```typescript
+    interface Cutout {
+      id?: string;
+      type: 'ellipse' | 'polygon';
+      color: string; // #RRGGBBAA
+      x: number;     // Final canvas X
+      y: number;     // Final canvas Y
+      z: number;     // Layering value
+      rotation: number; // Final degrees
+      rx?: number;    // Final ellipse radius X
+      ry?: number;    // Final ellipse radius Y
+      points?: Array<[number, number]>; // Final polygon points [[x1, y1], ...]
+    }
+    ```
+*   **`ShapeTemplate` (Build Time):** Represents a parsed shape directive from `artwork.md`.
+    ```typescript
+    interface ShapeTemplate {
+      id?: string;
+      type: 'ellipse' | 'polygon';
+      attributes: { // Unevaluated expressions as strings
+        x: string; y: string; z: string; rotation: string; color: string;
+        rx?: string; ry?: string; // Ellipse
+        pointsExpr?: string; // Polygon override variable name
+      };
+      defaultPoints?: Array<[number, number]>; // Polygon default points
+    }
+    ```
+*   **`Artwork` (Build Time):** The result of parsing an `artwork.md` file.
+    ```typescript
+    interface Artwork {
+      shapes: Array<ShapeTemplate>;
+    }
+    ```
 
 ## File Details
 
@@ -70,201 +114,149 @@ aniheim/
 
 ### `build.js`
 
-*   **Purpose:** Handles CLI arguments, initializes the build process.
-*   **Imports:** `path`, `fs`, `yargs`, `./src/build/process.js`
-*   **Exports:** None (Executable script).
+*   **Purpose:** CLI Entry Point.
+*   **Imports:** `path`, `fs`, `yargs`, `./src/build/episode/process.js`
+*   **Interface:** Parses args, determines paths, calls `episode.process(episodePath, outputPath)`.
+
+---
+
+### `src/build/<context>/process.js` (e.g., `episode/process.js`, `scene/process.js`)
+
+*   **Purpose:** Processes a specific type of Markdown file (`episode.md`, `scene.md`, etc.).
+*   **Imports:** `fs`, `path`, `necronomicon`, `./commands/*`, `../state.js`, `../<other_contexts>/process.js` (for recursion).
+*   **Exports:** `async function process(filePath, buildState)`
 *   **Interface:**
-    *   Parses CLI args (`<episode_markdown_file>`, `--output`).
-    *   Determines absolute input/output paths.
-    *   Calls `process(episodePath, outputPath)` to start the build.
+    *   `process(filePath, buildState)`:
+        *   Reads `filePath`.
+        *   Initializes `necronomicon` with commands specific to this context (imported from `./commands/`).
+        *   Executes content using `necronomicon.execute(content, buildState)`. Commands update the shared `buildState`.
+        *   Reports clear errors (with line numbers if possible via Necronomicon context) if required files (like `.abc`, `.json`, linked `.md`) are missing.
 
 ---
 
-### `src/build/process.js`
+### `src/build/<context>/commands/*.js` (e.g., `episode/commands/scene.js`, `scene/commands/character.js`, `artwork/commands/ellipse.js`)
 
-*   **Purpose:** Orchestrates the build using Necronomicon to process Markdown files. Reads the entry point episode file and recursively processes linked files via commands. Collects all necessary data for the final HTML emission.
-*   **Imports:** `fs`, `path`, `necronomicon`, `./commands/index.js`, `./emit.js`
-*   **Exports:** `async function process(episodePath, outputPath)`
-*   **Interface:**
-    *   `process(episodePath, outputPath)`:
-        *   Initializes `necronomicon` with commands from `./commands/index.js`.
-        *   Reads `episodePath` content.
-        *   Executes the content using `necronomicon.execute()`. The execution context/state will be built up by the command implementations (e.g., storing scene data, character defs).
-        *   After processing, calls `emit(outputPath, buildState)` with the final collected state.
-
----
-
-### `src/build/commands/index.js`
-
-*   **Purpose:** Aggregates and exports the list of command definitions for Necronomicon.
-*   **Imports:** `./scene.js`, `./character.js`, `./music.js`, `./background.js`, `./artwork.js`, `./score.js`, `./voice.js`, `./move.js`, `./animate.js`, `./dialog.js`
-*   **Exports:** `Array<CommandDefinition>` (Format expected by `necronomicon`)
-
----
-
-### `src/build/commands/scene.js` (and other command files)
-
-*   **Purpose:** Defines a single command for Necronomicon (e.g., `/scene`). Handles attribute validation and execution logic during build time. Execution often involves reading linked files, triggering asset generation, or updating the build state.
-*   **Imports:** `fs`, `path`, `necronomicon` (potentially, if recursive processing needed), `../generate/*`, `../parse/*` (as needed).
+*   **Purpose:** Defines Necronomicon commands valid within a specific file context.
+*   **Imports:** `fs`, `path`, `../state.js`, `../../generate/*`, `../../<other_contexts>/process.js`, `../../artwork/parse.js`.
 *   **Exports:** `CommandDefinition` object { name, description, validate, execute, example }.
-*   **Interface (`execute` function):**
+*   **Interface (`execute`):**
     *   `async execute(attributes, body, context)`:
-        *   `attributes`: Object of directive attributes.
-        *   `body`: String content of directive body (if any).
-        *   `context`: Shared build state object (passed by `necronomicon`). Allows commands to read/write data like parsed definitions, event lists, etc.
-        *   **Logic:** Validates attributes. Reads linked files (`attributes.file`, `attributes.source`). Calls generation functions (e.g., `generate.voice()`) if target assets (`attributes.audio`, `attributes.settings`) don't exist, passing LLM prompts from `body`. Parses content (e.g., `parse.artwork()`). Updates the `context` object with parsed data or adds events to a timeline. May recursively call `necronomicon.execute()` on linked file content.
-        *   **Returns:** (Typically `undefined` or status message). Result inclusion controlled by Necronomicon options.
+        *   `context`: Shared build state object (`instanceof BuildState`).
+        *   **Logic:** Validates attributes. Triggers recursive processing by calling `process()` for linked files (`attributes.file`, `attributes.source`). For commands defining assets (`/voice`, `/score`, `/artwork` linker), checks existence of target files (`attributes.settings`, `attributes.sheet`, `attributes.audio`, `attributes.file` for artwork). If *binary* target (`.mp3`) missing, calls appropriate `generate` function. If *text* target (`.json`, `.abc`, `artwork.md`) missing, throws informative error. For `/artwork` in `character.md`/`background.md`, it ensures the linked `artwork.md` is processed via `artwork.process()` which uses `artwork.parse()` and stores the resulting `Artwork` structure in the `buildState`. For `/ellipse`/`/polygon` within `artwork.md`, it adds a `ShapeTemplate` to the current artwork being parsed (held in `buildState`). Scene commands (`/move`, `/animate`, `/dialog`) add events to the scene timeline in `buildState`.
 
 ---
 
-### `src/build/generate/llm.js`
+### `src/build/generate/voice.js`
 
-*   **Purpose:** Abstract interaction with the configured LLM service (e.g., Gemini via `phantomaton-gemini`). Handles prompt formatting, API calls, and potentially retries/validation loops (a la `povgoblin`).
-*   **Imports:** `phantomaton-gemini` (or other LLM lib), configuration loader.
-*   **Exports:** `async function generate(prompt, validationFn?)`
+*   **Purpose:** Generates voice MP3 using TTS if file is missing.
+*   **Imports:** `fs`, `path`, TTS SDK, `../state.js` (to get settings path).
+*   **Exports:** `async function ensureAudio(dialogData, buildState)`
+*   **Interface:** Takes dialog info (text, target audio path, character ID) and `buildState`. Reads voice settings JSON from path stored in `buildState` for the character. Calls TTS API. Saves MP3. Throws if settings JSON missing.
+
+---
+
+### `src/build/generate/music.js`
+
+*   **Purpose:** Generates music MP3 from ABC file if MP3 is missing.
+*   **Imports:** `fs`, `path`, `child_process` (for `timidity++`), `abcjs`.
+*   **Exports:** `async function ensureAudio(scoreData)`
+*   **Interface:** Takes score info (sheet path, target audio path). Checks sheet exists (throws if not). Runs ABC -> MIDI -> MP3 pipeline. Saves MP3.
+
+---
+
+### `src/build/artwork/parse.js`
+
+*   **Purpose:** Parses `artwork.md` content into an `Artwork` structure.
+*   **Imports:** `fs`, `path`, `./process.js` (to run necronomicon with artwork commands).
+*   **Exports:** `async function parse(artworkMdPath)`
 *   **Interface:**
-    *   `generate(prompt, validationFn?)`: Sends `prompt` to LLM. If `validationFn` provided, retries until `validationFn(result)` returns true or max attempts reached.
-    *   **Returns:** `Promise<string>` (Generated text content).
-
-/comment(user:woe) {
-    Let's just omit this for now. There are some cases in here where the `povgoblin` approach might be useful, but for the most part episodes will be LLM-generated from the beginning, so the LLM can fill in those blanks.
-}
+    *   `parse(artworkMdPath)`: Reads the file. Creates a temporary state for the artwork parser. Calls `artwork.process(artworkMdPath, tempState)` which uses Necronomicon and `/ellipse`/`/polygon` commands to populate `tempState.shapes`.
+    *   **Returns:** `Promise<Artwork>` (containing the `shapes: Array<ShapeTemplate>`).
 
 ---
 
-### `src/build/generate/voice.js`, `settings.js`, `score.js`, `music.js`, `artwork.js`
+### `src/build/state.js`
 
-*   **Purpose:** Specific asset generation logic. Checks file existence, calls `generate.llm()` with appropriate prompts (from directive bodies), uses external tools (TTS API, `timidity++`), and saves results to target file paths specified in directive attributes.
-*   **Imports:** `fs`, `path`, `./llm.js`, SDKs (e.g., `@google-cloud/text-to-speech`), `child_process` (for `timidity++`), `abcjs`.
-*   **Exports:** Functions like `async ensureVoiceAudio(filePath, text, settingsPath)`, `async ensureVoiceSettings(filePath, prompt)`, `async ensureScoreSheet(filePath, prompt)`, `async ensureScoreAudio(filePath, sheetPath)`, `async ensureArtworkDef(filePath, prompt)`.
-*   **Interface:** Functions take target file paths and necessary inputs (text, prompts, source paths). They are idempotent (check existence first). Return `Promise<void>`.
-
-/comment(user:woe) {
-    Similar to the above, I think we just need `voice.js` and `score.js` (to produce voice and music mp3's) at this point. Everything else is text-based, so we can rely on the LLM that generates episodes to generate those details.
-
-    That said, we should surface clear error messages with line numbers when any of these text-based assets are missing, so that the author LLM knows to fill those in reactively.
-}
-
----
-
-### `src/build/parse/artwork.js`
-
-*   **Purpose:** Parses the artwork microformat directives within an `artwork.md` file into a structured list of shape definitions.
-*   **Imports:** `smarkup`.
-*   **Exports:** `function parse(artworkMdContent)`
-*   **Interface:**
-    *   `parse(artworkMdContent)`: Uses `smarkup` to parse the content.
-    *   **Returns:** `Array<ShapeDefinition>` (e.g., `{ id: 'head', type: 'ellipse', attributes: { x: '0', y: '0.15', color: '#0000FFAA', ... } }`). Attribute values are kept as strings containing expressions.
-
-/comment(user:woe) {
-    This might need to live in something like `build/formats/artwork/parse.js` so that we can have `build/artwork/commands/ellipse.js` and `build/artwork/commands/polygon.js` and so on.
-
-    Also, let's fully-specify `ShapeDefinition`. In keeping with our single-word names, I'd call it a `Cutout` instead.
-
-    From an OOP perspective, it would be great if `parse(artworkMd)` returned an `Artwork` object. Then, `artwork.render(location, pose, expression)` could return `Array<Cutout>`. (This allows us to move expression evaluation to build-time.)
-}
+*   **Purpose:** Defines and holds the shared state accumulated during the build process.
+*   **Imports:** None.
+*   **Exports:** `class BuildState { constructor(); addScene(); addCharacterDef(); addBackgroundDef(); addMusicDef(); addEvent(); ... }`
+*   **Interface:** A class instance passed around as the `context` in `necronomicon.execute`. Contains methods to store parsed definitions (characters, backgrounds, music, artwork structures), scene timelines (lists of events like move, animate, dialog), etc.
 
 ---
 
 ### `src/build/emit.js`
 
-*   **Purpose:** Takes the final build state (collected definitions, event lists, config data) and generates the output HTML file, bundling necessary runtime JavaScript.
-*   **Imports:** `fs`, `path`, `esbuild` (or other bundler).
+*   **Purpose:** Generates the final HTML output.
+*   **Imports:** `fs`, `path`, `esbuild`.
 *   **Exports:** `async function emit(outputPath, state)`
-*   **Interface:**
-    *   `emit(outputPath, state)`:
-        *   Loads runtime JS source files (`src/runtime/*`).
-        *   Injects the episode-specific `state` data (JSON stringified) into `src/runtime/data.js` (or similar mechanism).
-        *   Bundles runtime JS into a single script using `esbuild`.
-        *   Creates HTML structure referencing the bundled script and necessary CSS.
-        *   Writes the final HTML to `outputPath`.
+*   **Interface:** Bundles `src/runtime` code. Injects `state` (JSON-stringified, containing definitions and event timelines) into `runtime/data.js`. Writes final HTML.
 
 ---
 
 ### `src/runtime/index.js`
 
-*   **Purpose:** Entry point for the bundled JavaScript in the output HTML. Initializes the player.
-*   **Imports:** `./player.js`, `./render.js`, `./audio.js`, `./data.js` (holds injected state), `../config/*.json`.
-*   **Exports:** None.
-*   **Interface:**
-    *   Reads episode `data` (definitions, events).
-    *   Reads config JSONs (emoji map, pose/expression defs).
-    *   Initializes `render`, `audio`.
-    *   Creates and starts `player` instance, passing necessary data and modules.
+*   **Purpose:** Runtime entry point.
+*   **Imports:** `./player.js`, `./render.js`, `./audio.js`, `./data.js`, `../data/*.json`.
+*   **Interface:** Reads injected `data`. Reads static JSONs. Initializes and starts the `Player`.
 
 ---
 
 ### `src/runtime/player.js`
 
-*   **Purpose:** Manages the main animation loop (using `requestAnimationFrame`), updates time, processes events from the timeline, manages overall playback state (play/pause).
-*   **Imports:** `./state.js`, `./audio.js`, `./render.js`.
+*   **Purpose:** Main animation loop, event processing, state delegation.
+*   **Imports:** `./state.js`, `./audio.js`, `./render.js`, `./evaluate.js`.
 *   **Exports:** `class Player { constructor(config); play(); pause(); }`
 *   **Interface:**
-    *   `constructor({ events, characters, backgrounds, music, poseMap, exprMap, audio, render, state })`: Stores references.
-    *   `play()`: Starts the animation loop.
-    *   `pause()`: Stops the animation loop.
-    *   `update(time)`: (Called by loop) Checks `events` timeline, triggers actions (calls `state.move`, `state.animate`, `audio.play`, etc.) based on current `time`. Calls `state.update()` and `render.draw(state.getShapes())`.
+    *   `constructor({ events, characters, backgrounds, music, poseMap, exprMap, audio, render })`: Stores data. Instantiates `RuntimeState`.
+    *   `play()`/`pause()`: Control loop.
+    *   `update(time)`: (Loop callback) Updates `RuntimeState` based on events active at `time`. Gets current character states (position, pose params, expression params) from `RuntimeState`. For each visible character/background, gets its `Artwork` structure. Evaluates each `ShapeTemplate`'s attributes using `evaluate()` with the current state params to get final `Cutout` properties. Calls `render.draw()` with the list of `Cutout` objects. Manages audio playback via `audio` manager.
 
 ---
 
 ### `src/runtime/render.js`
 
-*   **Purpose:** Implements the Canvas 2D rendering logic. Draws shapes based on calculated properties.
+*   **Purpose:** Canvas 2D drawing implementation.
 *   **Imports:** None.
-*   **Exports:** `class Renderer { constructor(canvas); draw(shapes); }`
-*   **Interface:**
-    *   `constructor(canvas)`: Gets 2D context.
-    *   `draw(shapes)`: Clears canvas. Iterates through `shapes` array (pre-sorted by Z? Or sort here?), draws each ellipse/polygon using calculated `x, y, color, rotation, points, rx, ry`. Applies transformations based on scene coordinates.
+*   **Exports:** `class Renderer { constructor(canvas); draw(cutouts); }`
+*   **Interface:** `draw(cutouts)` takes an array of fully calculated `Cutout` objects and draws them. Handles Z-sorting.
 
 ---
 
 ### `src/runtime/audio.js`
 
-*   **Purpose:** Wrapper around `howler.js` to manage loading and playback of voice and music audio tracks.
+*   **Purpose:** `howler.js` wrapper.
 *   **Imports:** `howler`.
 *   **Exports:** `class AudioManager { load(id, path); play(id, ?volume); stop(id); }`
-*   **Interface:** Provides methods to load audio files (referenced by IDs used in directives) and control playback.
 
 ---
 
 ### `src/runtime/evaluate.js`
 
-*   **Purpose:** Parses and evaluates the simple arithmetic expressions found in artwork attribute values.
-*   **Imports:** `mathjs` (or custom parser).
+*   **Purpose:** Evaluates arithmetic expressions from `ShapeTemplate` attributes at runtime.
+*   **Imports:** Custom lightweight parser/evaluator.
 *   **Exports:** `function evaluate(expression, context)`
-*   **Interface:**
-    *   `evaluate(expression, context)`: Parses `expression` string. Uses variables from `context` (e.g., `context = { position: {...}, pose: {...}, expression: {...} }`).
-    *   **Returns:** `number` (Result of the expression).
-
-/comment(user:woe) {
-    Let's settle on using a custom parser here.
-
-    Also, does this really need to be evaluated at run-time? Can't we do all the math at build-time and then just let the player play it? See notes on an `Artwork` class above.
-}
+*   **Interface:** `evaluate(expression, context)` takes string expression and context object (`{ position: {...}, pose: {...}, expression: {...} }`), returns `number`.
 
 ---
 
 ### `src/runtime/state.js`
 
-*   **Purpose:** Manages the current state of all characters (position, current pose parameters, current expression parameters). Calculates interpolated values based on active `/move` and `/animate` directives. Provides the final shape definitions for rendering.
-*   **Imports:** `./evaluate.js`, `./interpolate.js`.
-*   **Exports:** `class StateManager { constructor(chars, backgrounds, poseDefs, exprDefs); move(...); animate(...); update(deltaTime); getShapes(); }`
+*   **Purpose:** Manages current interpolated state (position, pose params, expression params) for characters based on timeline events.
+*   **Imports:** `./interpolate.js`, `../data/*.json` (for definitions).
+*   **Exports:** `class RuntimeState { constructor(chars, backgrounds, poseDefs, exprDefs, emojiMap); update(time, activeEvents); getCurrentParams(id); }`
 *   **Interface:**
-    *   `constructor(...)`: Stores initial character/background definitions and pose/expression parameter definitions.
-    *   `move(charId, start, duration, endPos)`: Records a movement action.
-    *   `animate(charId, start, duration, sequence)`: Records pose/expression changes.
-    *   `update(deltaTime)`: Updates current time. Calculates interpolated positions, pose parameters, and expression parameters for all characters based on active actions and `deltaTime`.
-    *   `getShapes()`: For each character/background, evaluates its artwork shape definitions using `evaluate()` with the current interpolated state (`position`, `pose`, `expression`). Returns the final list of calculated shapes ready for rendering.
+    *   `constructor(...)`: Stores definitions. Initializes character states.
+    *   `update(time, activeEvents)`: Calculates current interpolated `position`, `pose` parameters, `expression` parameters for all characters based on `activeEvents` determined by `Player`.
+    *   `getCurrentParams(id)`: Returns the current `{ position: {...}, pose: {...}, expression: {...} }` object for the given character ID.
 
 ---
 
 ### `src/runtime/interpolate.js`
 
-*   **Purpose:** Provides simple linear interpolation functions.
+*   **Purpose:** Linear interpolation.
 *   **Imports:** None.
 *   **Exports:** `function lerp(a, b, t)`
-*   **Interface:** Standard linear interpolation.
 
 ---
 
-This plan provides a clear structure for implementation, mapping directly to the components and interactions defined in `DESIGN.md`. Let the coding commence! 💻👻
+This revised plan reflects the contextual command processing, simplifies generation, focuses artwork definition, and clarifies the runtime evaluation flow. It seems ready, Dr. Woe! 🚀👻
