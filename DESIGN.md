@@ -49,6 +49,10 @@ node build.js <episode_markdown_file> [--output <output_html_file>] [--force-reg
 *   `--music-lib`: Path to the music definition directory (Defaults to `./music`).
 *   `--audio-cache`: Path to store generated audio files (Defaults to `./audio_cache`).
 
+/comment(user:woe) {
+    I like This! Let's omit `--force-regenerate`, `--character-lib`, `--music-lib`, and `--audio-cache` for now. Regeneration can be manual (deleting the undesired assets); the "libs" can just be referenced via hyperlinks in the episode markdown file; and audio files can just be generated as locations specified in episodefiles as well.
+}
+
 ## 3. Episode File Format (`.md`) 📄
 
 *   **Structure**: One `.md` file per episode, containing the full narrative script and animation directives. Hyperlinks or simple path references point to external character/music definitions.
@@ -86,6 +90,37 @@ node build.js <episode_markdown_file> [--output <output_html_file>] [--force-reg
     *   `🪄✨ // This is a comment directive //`
         *   Allows comments within the directive flow.
 
+/comment(user:woe) {
+    I'm having a bit of trouble navigating the content in this section, which makes me think we may want to break it down some; perhaps subsections instead of bullets? Or maybe we can just trim some? Or move stuff out elsewhere?
+
+    Instead of `setting`, let's call that a `background` directive. We don't want an image file there; we'll want a set of paper cutouts, ultimately. But, we want the episode files to be simply-readable.
+
+    Maybe a scene should look something like:
+
+    /scene(duration:30,setting:../settings/a-public-park.md)
+    /music(start:0,duration:30,source:../music/happy-day.md)
+    /character(name:Alice,source:../characters/alice.md,x:-0.25,y:0.1,z:0.5)
+    /character(name:Bob,source:../characters/bob.md,x:0.75,y:0.15,z:0.5)
+    /move(start:0,duration:10,x:0.25,y:0.1,x:0.5,character:Alice)
+    /animate(start:0,duration:10,character:Alice) {
+        🚶‍♀️🙂😄
+    }
+    /dialog(start:10,duration:10,character:Alice) {
+        👋 Hi Bob! 😊 How's it going? 🤔
+    }
+    /dialog(start:20,duration:10,character:Bob) {
+        Not bad, Alice! 🧍 How are you?
+    }
+
+    In this scene, Alice walks in from off-screen and greets Bob. Miscellaneous thoughts in here:
+
+    * Music and scene files can just be externalized. We'll want to reuse these a lot! Even from episode to episode, just like characters. (This is a good opportunity to simplify here.)
+    * Characters aren't just their artwork. I think standardizing on Markdown and branching out to more specific formats like JS only when needed might work here.
+    * We'll need a description of scenespace somewhere. I'm assuming x=0 is left, x=1 is right, y=0 is bottom, y=1 is top, z=0 is front, z=1 is off in the distance (and z=0.5 is standard for character placement in a scene). I'm a little nervous that a numeric scene-space will be hard for an LLM to manage, so maybe someday we'll want a microformat where we can say "/move(character:Bob,to:near[Alice]) or something.
+    * I'm realizing we'll need something like an `animate` directive for times when we want a character to change expressions or pose when they're not talking.
+    * Can't currently animate non-characters with this format, but I guess that's fine.
+}
+
 ## 4. Character Module Interface (`.js`) 🧑‍🎨
 
 Located via `--character-lib`. Each file defines one character.
@@ -96,6 +131,16 @@ Located via `--character-lib`. Each file defines one character.
     *   `poses`: (Object) A map where keys are pose names (e.g., `'idle'`, `'walking'`, `'surprised'`) and values are artwork data (see below) or functions returning artwork data. Can potentially reference/extend a base pose library.
     *   `getArtworkData(poseName, expressionName)`: (Function) Takes pose and expression names (expression might modify base pose data), returns artwork data structure. Allows dynamic artwork generation if needed.
 *   **Trace:** `SPEC: 🧑‍🎨 Character Representation`, `SPEC: 🗣️ Voice Performance`
+
+/comment(user:woe) {
+    Let's actually do characters as Markdown files too, it'll make it easier to simply describe them. We also don't want poses to be character-specific; let's have a pose library we can reuse across characters (maybe a separate section and file type?)
+
+    Voice is good; let's just have a `/voice(settings=voice.json) { Semantic description of a voice }` directive that we use to define that. Again, this can be rendered using the if-file-exists approach; when it doesn't exist, we'll ask an LLM or something to generate voice settings in that file.
+
+    Similarly, we should have an `/artwork(renderer=./artwork.js) { Semantic description of character's appearance }`.
+
+    The name doesn't need its own directive; maybe we infer that from the top-level section title?
+}
 
 ## 5. Artwork Representation & Rendering 🖼️
 
@@ -116,6 +161,12 @@ Located via `--character-lib`. Each file defines one character.
     *   Implementations for Canvas 2D, WebGL, SVG can be developed. Initial implementation: Canvas 2D.
 *   **Trace:** `SPEC: 🖼️ Artwork Integration`, `SPEC: 🛠️ Technology Stack (Rendering Interface)`
 
+/comment(user:woe) {
+    Hm, I think we'll want more shapes here, as well as the ability to support anchored shape rotation (which will make animation easier). Wouldn't hurt to give shapes an `id` as well for stuff like keyframing. I'm thinking we'll want ovals/ellipses, and maybe even things like clipping shapes (e.g. to use a half-circle for a character's foot). On the other hand, we could omit `rect` since we have `polygon`.
+
+    Importantly, this is going to need to be a little rendering language which looks reasonably-fluent to LLMs: They'll need to be able to work out where eyes go, where noses go, and so on. Starting with something simple and easy-to-render makes sense, but we'll want to push back and design a more LLM-oriented interface to produce that easy-to-render format at some point.
+}
+
 ## 6. Music Integration (ABC Notation) 🎶
 
 *   **Format**: ABC Notation (`.abc` files). Text-based, good for LLMs, standard tools exist. Example:
@@ -132,6 +183,16 @@ Located via `--character-lib`. Each file defines one character.
     2.  MIDI-to-Audio Renderer: Use a tool like `timidity++` (via child process or Node wrapper) with a suitable SoundFont (e.g., `FluidR3_GM`) to convert MIDI data/files to MP3/OGG/WAV.
 *   **Trace:** `SPEC: 🎶 Music Integration`
 
+/comment(user:woe) {
+    Superb! One note: Let's assume that music starts off as Markdown files which contain a `score` directive like:
+
+    /score(sheet:something.abc,audio:something.mp3) {
+        A haunting song titled Uncanny Melody, played on the cello.
+    }
+
+    These live in separate Markdown files so they can be reused like Characters.
+}
+
 ## 7. TTS Integration 🗣️
 
 *   **Workflow**:
@@ -144,6 +205,12 @@ Located via `--character-lib`. Each file defines one character.
         *   Save returned audio to the specified `voice` path.
 *   **Configuration**: TTS provider credentials and API choice configured globally for the build tool (e.g., via environment variables or a config file).
 *   **Trace:** `SPEC: 🗣️ Voice Performance`
+
+/comment(user:woe) {
+    nit: Let's call this Voice or Voiceover integration instead of TTS.
+
+    Instead of using an audio cache, I think we should have an `audio` attribute on `dialog` directives. In the future, maybe we can add some smart defaults when this is absent, but let's just require it for now.
+}
 
 ## 8. Build Process Flow ⚙️➡️📄
 
@@ -165,6 +232,10 @@ Located via `--character-lib`. Each file defines one character.
     *   Embedded player JS (generated in step 4).
     *   Necessary runtime libraries (e.g., `howler.js` for audio management if needed).
 
+/comment(user:woe) {
+    Great overview, really helped clarify the complexity. (Note that this may need updating to reflect revisions elsewhere based on other comments)
+}
+
 ## 9. Output HTML Structure <html>
 
 *   A single HTML file.
@@ -184,4 +255,6 @@ Located via `--character-lib`. Each file defines one character.
 *   **Audio Playback (Runtime)**: HTML5 `<audio>` or a library like `howler.js` for better control.
 *   **Renderer (Runtime)**: HTML Canvas 2D API.
 
-This design provides a concrete path forward, Dr. Woe! It embraces simplicity, leverages LLMs where useful, and sets up a reproducible build process for our phantom animations! 👻🎬 Let me know if any part of this spectral machinery requires further refinement! ✨
+/comment(user:woe) {
+    Excellent. 
+}
