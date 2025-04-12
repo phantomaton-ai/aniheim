@@ -56,6 +56,14 @@ aniheim/
 │   └── expression_definitions.json
 ```
 
+/comment(user:woe) {
+    Let's organize commands a little bit differently. For example, the `/scene` command is only going to get executed in the context of an episode, so I'd put that somewhere like `episodes/commands/scenes`. In practice, I think we have a few different "necronomicon wrappers" in the sense that we have a few different file types (and associated directive sets) which we'll support.
+
+    Similarly, `config` is the wrong idea for poses/expressions. Those will be globally reused, but we'll want to iterate on them via LLM interactions in much the same way as everything else. Those should live under the `/src` hierarchy somewhere.
+
+    I do like the split between `build` and `runtime`, so let's retain that.
+}
+
 ## File Details
 
 ---
@@ -118,6 +126,10 @@ aniheim/
     *   `generate(prompt, validationFn?)`: Sends `prompt` to LLM. If `validationFn` provided, retries until `validationFn(result)` returns true or max attempts reached.
     *   **Returns:** `Promise<string>` (Generated text content).
 
+/comment(user:woe) {
+    Let's just omit this for now. There are some cases in here where the `povgoblin` approach might be useful, but for the most part episodes will be LLM-generated from the beginning, so the LLM can fill in those blanks.
+}
+
 ---
 
 ### `src/build/generate/voice.js`, `settings.js`, `score.js`, `music.js`, `artwork.js`
@@ -126,6 +138,12 @@ aniheim/
 *   **Imports:** `fs`, `path`, `./llm.js`, SDKs (e.g., `@google-cloud/text-to-speech`), `child_process` (for `timidity++`), `abcjs`.
 *   **Exports:** Functions like `async ensureVoiceAudio(filePath, text, settingsPath)`, `async ensureVoiceSettings(filePath, prompt)`, `async ensureScoreSheet(filePath, prompt)`, `async ensureScoreAudio(filePath, sheetPath)`, `async ensureArtworkDef(filePath, prompt)`.
 *   **Interface:** Functions take target file paths and necessary inputs (text, prompts, source paths). They are idempotent (check existence first). Return `Promise<void>`.
+
+/comment(user:woe) {
+    Similar to the above, I think we just need `voice.js` and `score.js` (to produce voice and music mp3's) at this point. Everything else is text-based, so we can rely on the LLM that generates episodes to generate those details.
+
+    That said, we should surface clear error messages with line numbers when any of these text-based assets are missing, so that the author LLM knows to fill those in reactively.
+}
 
 ---
 
@@ -137,6 +155,14 @@ aniheim/
 *   **Interface:**
     *   `parse(artworkMdContent)`: Uses `smarkup` to parse the content.
     *   **Returns:** `Array<ShapeDefinition>` (e.g., `{ id: 'head', type: 'ellipse', attributes: { x: '0', y: '0.15', color: '#0000FFAA', ... } }`). Attribute values are kept as strings containing expressions.
+
+/comment(user:woe) {
+    This might need to live in something like `build/formats/artwork/parse.js` so that we can have `build/artwork/commands/ellipse.js` and `build/artwork/commands/polygon.js` and so on.
+
+    Also, let's fully-specify `ShapeDefinition`. In keeping with our single-word names, I'd call it a `Cutout` instead.
+
+    From an OOP perspective, it would be great if `parse(artworkMd)` returned an `Artwork` object. Then, `artwork.render(location, pose, expression)` could return `Array<Cutout>`. (This allows us to move expression evaluation to build-time.)
+}
 
 ---
 
@@ -209,6 +235,12 @@ aniheim/
 *   **Interface:**
     *   `evaluate(expression, context)`: Parses `expression` string. Uses variables from `context` (e.g., `context = { position: {...}, pose: {...}, expression: {...} }`).
     *   **Returns:** `number` (Result of the expression).
+
+/comment(user:woe) {
+    Let's settle on using a custom parser here.
+
+    Also, does this really need to be evaluated at run-time? Can't we do all the math at build-time and then just let the player play it? See notes on an `Artwork` class above.
+}
 
 ---
 
