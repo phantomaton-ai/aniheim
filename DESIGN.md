@@ -86,6 +86,18 @@ Contains the overall narrative flow and scene composition.
     *   *(Design Note: LLM interaction with numeric coords needs monitoring. Future: symbolic placement like `pos: near(Bob)`)*
 *   **Timing:** `start` and `duration` attributes (in seconds) control the timeline within a scene.
 
+/comment(user:woe) {
+    Great! Continually improving here. Note that attributes supported by Smarkup are still pretty janky; they can't contain commas or parentheses, for example, due to the weak parsing. To work around that:
+
+    * Split up arrays (no `initialPos` because of the commas in the value; `x`, `y`, and `z`)
+    * Prefer to lean on the semantics of Markup when convenient
+        * For example, we could infer the title from the top-level section name (so that we don't break when we try to give an episode a name with a comma in it)
+        * This also reduces the number of directives we need to invent
+    * Remove any quotes from examples; assume things like filenames are comma/paren-free
+
+    Additionally, I like `initialPose`, but it can be made redundant by just including some emoji at the start of a dialog body. Let's prune it.
+}
+
 ### 3.2. Character Definition (`character.md`)
 
 Defines a character's appearance, voice, and potentially default behaviors.
@@ -106,6 +118,9 @@ A cheerful programmer ghost 👻💻 with translucent blue skin and glowing circ
 # Optional: Default pose/expression
 /default(pose: 'idle', expression: 'neutral')
 ```
+/comment(user:woe) {
+    nit: "Render as layered 2D shapes" doesn't need to be specified, since we'll always be rendering that way.
+}
 
 *   **Name:** Inferred from the H1 heading (`# Alice`).
 *   `/voice`: Specifies voice characteristics.
@@ -173,6 +188,10 @@ Poses and expressions are primarily controlled via standard Unicode emoji within
 *   **Extensibility:** Character artwork renderers can implement custom mappings or handle standard keys appropriately. The global map defines engine defaults.
 *   **Trace:** `SPEC: 🕺 Animation Logic`
 
+/comment(user:woe) {
+    Let's try to design our interface for representing individual poses and expressions here. Both will be sets of well-defined parameters for controlling the rendering of a character; poses will control the relative orientation of limbs, and expressions will control the relative size, position, and orientation of facial elements. Let's go ahead and document all of our parameters here, as well as the coordinate system we'll work with.
+}
+
 ## 5. Artwork Representation & Rendering 🖼️
 
 *   **Data Format (Runtime):** Character/Background `/artwork` renderers (`.js` modules) must ultimately provide data as an array of shape objects when called by the player.
@@ -196,6 +215,20 @@ Poses and expressions are primarily controlled via standard Unicode emoji within
     *   `renderFrame(shapeArrays)`: Takes a list of shape arrays (one per character/background element) and draws them. Handles layering (z-index), positioning (baseX/Y from directives), and scaling.
     *   Initial implementation: Canvas 2D.
 *   **Trace:** `SPEC: 🖼️ Artwork Integration`, `SPEC: 🛠️ Technology Stack (Rendering Interface)`
+
+/comment(user:woe) {
+    Looking at the output format, I'm realizing this looks a lot like a list of directives:
+
+    /polygon(id:body,color:#A0A0A0AA,...etc) {
+        [-5,-25],[5,-25],[5,25],[-5,25]
+    } polygon!
+
+    Given that we just want to change the position of these based on pose and expression, maybe we should instead gravitate toward microformats with some basic arithmetic support, e.g.:
+
+    /circle(id:foo,x:position.x+4,radius:0.2,rotation:pose.shoulder.left.rotation)
+
+    We should also define our coordinate space. Let's assume that 1.0 is equivalent to the height of the display in pixels.
+}
 
 ## 6. Music Rendering (ABC) 🎶
 
