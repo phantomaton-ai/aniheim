@@ -79,6 +79,12 @@ This is narrative text in Markdown.
 # More scenes can follow...
 ```
 
+/comment(user:woe) {
+    Getting close, but nested directives (e.g. all those things in a scene) aren't supported by Smarkup. We'll have to get away with using a single-line `/scene` to establish a new scene boundary.
+    
+    Also, it's a nit, but `x` `y` and `z` for coordinate names please. The "initial" and "end" aspects can be inferred from context and/or explained in documentation.
+}
+
 *   **Title:** Inferred from the top-level H1 heading.
 *   **Coordinates:** `initialX`, `initialY`, `initialZ`, `endX`, `endY`, `endZ`. System defined in Section 5.
 *   **Initial Pose:** Not an attribute; set by the first emoji in the first `/animate` or `/dialog` for that character.
@@ -116,6 +122,20 @@ A cheerful programmer ghost 👻💻 with translucent blue skin and glowing circ
 
 ```
 
+/comment(user:woe) {
+    Again, nested directives are unsupported. We can simulate that by doing:
+
+    /artwork(file:artwork.md) {
+        A pig wearing lipstick.
+    } artwork!
+
+    ...and then having the "nested" directives interpreted within that file.
+
+    This is also a little convenient insofar as it minimizes the number of directives we need to introduce in any given context. We can also support LLM-driven-generation-as-needed pretty easily with this approach.
+
+    (You know, let's consider handling `/scene` the same way in the next update. A briefer scene summary should be sufficient to give a sense of the fully story of an episode; the contents can include specific dialog, but we can omit things like music at the episode-level, balancing completeness and conciseness a little better.)
+}
+
 *   **Name:** Inferred from H1.
 *   `/voice`: Generates/references TTS settings JSON. Body is LLM prompt.
 *   `/artwork`: No attributes. Body contains the character's visual definition using the **Artwork Microformat** (Section 5). This defines the base shapes and how they react to `pose` and `expression` variables. No external JS renderer needed by default.
@@ -134,6 +154,10 @@ A light upbeat tune suitable for pleasant outdoor scenes.
 
 *   Generates/references ABC sheet and rendered audio. Body is LLM prompt.
 
+/comment(user:woe) {
+    100% fabulous! I think this is a good section to refer back to for other content generation types. Music generation has a lot of complexity to it, but we've made it so simple here.
+}
+
 ### 3.4. Background Definition (`background.md`)
 
 ```markdown
@@ -149,6 +173,14 @@ A simple park with grass a tree and a bench.
 } artwork!
 ```
 * Uses the same `/artwork` directive and microformat as characters, but typically without pose/expression variables.
+
+/comment(user:woe) {
+    Love it! Excellent use of microformats for the polygon points. One note is that bodies can't appear on the same line in Smarkup, so the example should be more like:
+
+    /polygon(id: grass, color: #00A000, z: 1) {
+        [-1 0] [1 0] [1 0.3] [-1 0.3]
+    } polygon!
+}
 
 ## 4. Pose & Expression Library (Emoji Microformat) 😀🚶‍♀️
 
@@ -167,6 +199,49 @@ Emoji in `/dialog` and `/animate` bodies map to named poses/expressions, which t
     *   **Pose:** `pose.torso.angle`, `pose.head.tilt`, `pose.leftArm.shoulder.angle`, `pose.leftArm.elbow.angle`, `pose.rightLeg.knee.angle`, etc. (Angles in degrees).
     *   **Expression:** `expression.mouthShape` (key for predefined polygon points like `'smile'`, `'frown'`, `'o_shape'`), `expression.eyeShape` (key like `'normal'`, `'wide'`, `'squint'`), `expression.eyebrowLeft.angle`, `expression.eyebrowRight.angle`, `expression.eyeOffsetY`.
 *   **Timeline:** Changes occur linearly interpolated over the duration specified by the number of emoji vs the directive duration. `/animate(duration: 2) { 🤔 V }` -> Apply "thinking_pose" params over 1s, then "peace_sign" params over the next 1s.
+
+/comment(user:woe) {
+    This is heading in the right direction. We want a fully-documented pose and expression system, though, like:
+
+    pose:
+        left:
+            ankle:
+                bend: -1...1 # -1 = all the way back, 0 = straight, 1 = all the way forward
+            calf:
+                twist: -1...1 # -1 = twisted max left, 1 = twisted max right
+            knee:
+                bend: 0...1  # 0 = straight, 0.5 = 90-degree bend, 1.0 = fully bent
+            thigh:
+                twist: -1...1 # -1 = twisted max left, 1 = twisted max right
+        right:
+            ...
+    expression:
+        left:
+            eyebrow:
+                elevation: 0...1 # Lifted brow
+                rotation: -1...1 # -1 rotated outward, 0 flat, 1 rotated inward
+                width: 0...1     # 0 = narrow, e.g. scrunched, 1 = full width
+            lip:
+                corner:
+                    elevation: -1...1  # -1 frown, 0 neutral, 1 smiling
+                    roundness: 0...1   # 0 = open-mouthed, 1 = smiling/frowning
+        right:
+            ...
+        mouth:
+            height: 0...1 # 0=closed, 1=wide open
+            width: 0...1 # 0=pursed lips, 1=wide smile/frown/etc
+        nose:
+            height: 0...1        # 0 = fully scrunched, 1 = regular
+
+    We'll want to strike a challenging balance between providing enough specificity to capture a wide range of poses, without overwhelming ourselves with too many parameters. The key things that matter in the example above:
+
+    * Single-word variable names are preferred; `foo.bar` instead of `fooBar` so that we can group `foo` things easily
+    * Use a simple numbering system that applies directly to the joint being controlled. We don't want to be thinking in angles all the time; we want to be thinking in terms of the way an arm is positioned as it waves.
+    * Avoid enums like `mouthShape`; let's minimize the amount of prior knowledge implementations will need to show up with.
+    * Document the semantics of each parameter in plain, physical terms. Make it easy for the LLM to understand the body and/or face it is positioning.
+
+    I'm realizing there is a fair amount of latent complexity in this space. Let's find a good, initial, minimal scope to work with here, then consider refactoring out into its own package later.
+}
 
 ## 5. Artwork Representation & Rendering 🖼️
 
@@ -197,13 +272,29 @@ Artwork is defined **declaratively** within `/artwork` bodies using a `smarkup`-
     *   `init(containerElement)`
     *   `renderFrame(calculatedShapes)`: Takes list of objects, each with final `id`, `type`, `color`, `x`, `y`, `z`, `rotation`, `points`, `radius`, etc. after expression evaluation.
 
+/comment(user:woe) {
+    Drop `/circle` (redundant to ellipse) and the  `fill`, `stroke`, and `lineWidth` attributes; we'll just draw solid shapes for now.
+
+    `rotation` should be required for consistency.
+
+    No need for the runtime renderer interface at this level, let's omit that for now.
+}
+
 ## 6. Music Rendering (ABC) 🎶
 
 *   Unchanged: Uses LLM for ABC generation from `/score` body if needed, renders ABC to audio via `abcjs`/synth if needed.
 
+/comment(user:woe) {
+    Please restore content to this section. I understand that it's unchanged, but we've effectively deleted it by saying "unchanged"
+}
+
 ## 7. Voiceover Generation 🗣️
 
 *   Unchanged: Uses LLM for voice settings generation from `/voice` body if needed, calls TTS service if `/dialog` audio file is missing.
+
+/comment(user:woe) {
+    Please restore content to this section (as above)
+}
 
 ## 8. Build Process Flow (Revised) ⚙️➡️📄
 
@@ -236,5 +327,3 @@ Artwork is defined **declaratively** within `/artwork` bodies using a `smarkup`-
 *   Audio (Runtime): `howler.js`.
 *   Renderer (Runtime): Canvas 2D via swappable module.
 *   **Expression Evaluation (Runtime):** A simple math expression parser library (e.g., `mathjs` subset or custom).
-
-This iteration solidifies the artwork definition process using an embedded microformat, directly linking it to pose/expression parameters and simplifying the character definition. We're getting very close, Dr. Woe! 😈✨
