@@ -1,260 +1,258 @@
-# Aniheim Rendering Engine - Design Document ✍️📐
+# Aniheim Rendering Engine - Design Document ✍️📐 (Revision 2)
 
-This document details the design of the Aniheim Rendering Engine, specifying the interfaces, formats, and workflow required to fulfill the `SPECIFICATION.md`. Our goal is a build system that transforms LLM-friendly source files into self-contained HTML animations.
+This document details the design of the Aniheim Rendering Engine, specifying the interfaces, formats, and workflow required to fulfill the `SPECIFICATION.md`. Our goal is a **build system**, orchestrated by Node.js and leveraging `necronomicon` to execute `smarkup` directives, that transforms LLM-friendly source files (primarily Markdown) into self-contained HTML animations.
 
 ## 1. Architecture Overview
 
-The engine operates as a command-line build tool. It parses a primary Episode Markdown file, resolves dependencies (characters, music, voice), generates necessary assets (audio), and finally emits a single, self-contained HTML file capable of playing the animation.
+The engine operates as a command-line build tool (`node build.js <episode_file>`). It parses a primary Episode Markdown file, recursively processes directives that link to external Markdown files (characters, music, backgrounds), generates assets (voice audio, music audio/sheets, voice settings) using an LLM-in-the-loop approach if they don't exist, and emits a single, self-contained HTML file for playback.
 
 ```mermaid
 graph LR
-    A[Episode.md] --> B{Build Engine (Node.js)};
-    C[CharacterLib/*.js] --> B;
-    D[MusicDefs/*.abc] -- Optional --> B;
-    E{LLM (Music Gen)} -- Optional --> D;
-    F{LLM (TTS Gen)} -- Optional --> G[AudioCache/*.mp3];
-    B --> G;
+    A[Episode.md] --> B{Build Engine (Node.js + Necronomicon)};
+    C[Character.md] --> B;
+    D[Music.md] --> B;
+    E[Background.md] --> B;
+    F{LLM (Music/Voice/Art)} -- Generate --> G[Generated Assets (.abc, .mp3, .json, .js)];
+    B -- Needs Asset? --> F;
+    B -- Uses --> G;
     B --> H[Output.html];
 
-    subgraph Inputs
-        A
-        C
-        D
+    subgraph Source Files (.md)
+        A; C; D; E;
     end
     subgraph External Services
-        E
-        F
+        F;
     end
     subgraph Build Process
-        B
-        G
+        B;
+    end
+    subgraph Generated/Cached Assets
+        G;
     end
     subgraph Output
-        H
+        H;
     end
 ```
 
 ## 2. Command-Line Interface (CLI) 💻
 
-The engine is invoked via Node.js:
+Invocation is simplified:
 
 ```bash
-node build.js <episode_markdown_file> [--output <output_html_file>] [--force-regenerate] [--character-lib <path>] [--music-lib <path>] [--audio-cache <path>]
+node build.js <episode_markdown_file> [--output <output_html_file>]
 ```
 
 *   `<episode_markdown_file>`: Path to the main `.md` file for the episode (Required).
-*   `--output`: Path for the output HTML file (Defaults to `<episode_name>.html` in the current directory).
-*   `--force-regenerate`: Forces regeneration of cached assets (music, voice).
-*   `--character-lib`: Path to the character definition directory (Defaults to `./characters`).
-*   `--music-lib`: Path to the music definition directory (Defaults to `./music`).
-*   `--audio-cache`: Path to store generated audio files (Defaults to `./audio_cache`).
+*   `--output`: Path for the output HTML file (Defaults to `<episode_name>.html` next to the source).
+*   Asset regeneration is handled manually by deleting the target generated file (e.g., deleting `./audio/alice_line_1.mp3` triggers regeneration on the next build). Asset library paths are implicitly relative to the file containing the directive.
 
-/comment(user:woe) {
-    I like This! Let's omit `--force-regenerate`, `--character-lib`, `--music-lib`, and `--audio-cache` for now. Regeneration can be manual (deleting the undesired assets); the "libs" can just be referenced via hyperlinks in the episode markdown file; and audio files can just be generated as locations specified in episodefiles as well.
-}
+## 3. Core File Formats (`.md`) 📄
 
-## 3. Episode File Format (`.md`) 📄
+Markdown is the primary format for episodes, characters, music definitions, and backgrounds, enabling reusability and LLM familiarity. Directives follow the `smarkup` default syntax: `/directive(attr:value) { body } directive!`.
 
-*   **Structure**: One `.md` file per episode, containing the full narrative script and animation directives. Hyperlinks or simple path references point to external character/music definitions.
-*   **Directives**: Uses `🪄✨ directive(...) { body } directive⚡️` syntax.
-    *   `🪄✨ setting(background: 'path/image.png' | '#RRGGBB', foreground?: 'path/overlay.png')`
-        *   Specifies scene background (image path or hex color) and optional static foreground elements.
-        *   **Trace:** `SPEC: 📖 Story Structure & Scenes`
-    *   `🪄✨ characters(list: [{ name: 'CharName', module: './path/to/CharName.js', pos: [x, y], pose: 'idle' }, ...])`
-        *   Declares characters used in the episode, linking to their JS module and setting initial state. `pos` is likely %-based coords `[50, 50]` = center. `pose` references a key in the character's pose map.
-        *   **Trace:** `SPEC: 📖 Story Structure & Scenes`, `SPEC: 🧑‍🎨 Character Representation`
-    *   `🪄✨ action(character: 'CharName', type: 'move', to: [x, y], duration: '2s')`
-        *   Moves a character. Duration suggests speed.
-        *   **Trace:** `SPEC: 🕺 Animation Logic`
-    *   `🪄✨ action(character: 'CharName', type: 'pose', name: 'thinking' | 'surprised', duration: '0.5s')`
-        *   Changes character pose/expression instantly or over a short duration (implementation deferred, initially instant swap). Uses pose keys from the character module.
-        *   **Trace:** `SPEC: 🕺 Animation Logic`
-    *   `🪄✨ dialog(character: 'CharName', voice: './audio_cache/charname_line_01.mp3') { Hello there! 👋 I'm feeling happy! 😀 } dialog⚡️`
-        *   Defines a line of dialog spoken by a character.
-        *   `voice`: Path for the cached TTS audio file. If the file doesn't exist, the engine generates it using the text body and character-specific TTS settings. The path is relative to the `--audio-cache` directory.
-        *   **Microformat (Emoji)**: Emoji within the body control pose/expression *during* playback of this line.
-            *   `👋`: Maps to a predefined 'wave' pose/action.
-            *   `😀`: Maps to a predefined 'happy' expression (overrides base pose's expression).
-            *   Mapping defined globally or per-character (TBD). Parser extracts emoji; TTS receives cleaned text.
-        *   **Trace:** `SPEC: 💬 Dialog Display`, `SPEC: 🗣️ Voice Performance`
-    *   `🪄✨ music(sheet: './music/theme.abc', audio: './audio_cache/theme.mp3', action: 'play' | 'stop' | 'set_volume(0.5)') { A spooky yet jaunty theme 👻 } music⚡️`
-        *   Controls background music.
-        *   `sheet`: Path to the music definition file (ABC notation preferred). Relative to `--music-lib`.
-        *   `audio`: Path for the cached rendered audio file. Relative to `--audio-cache`.
-        *   `action`: Controls playback state.
-        *   **LLM Generation & Caching**:
-            *   If `sheet` path doesn't exist AND body has description: Call LLM to generate ABC notation based on description, save to `sheet` path.
-            *   If `audio` path doesn't exist: Render `sheet` file (ABC -> MIDI -> MP3 using e.g., `abcjs` + `timidity++`/SoundFont wrapper), save to `audio` path.
-            *   Existence of files skips generation unless `--force-regenerate`.
-        *   **Trace:** `SPEC: 🎶 Music Integration`
-    *   `🪄✨ // This is a comment directive //`
-        *   Allows comments within the directive flow.
+### 3.1. Episode Structure (`episode.md`)
 
-/comment(user:woe) {
-    I'm having a bit of trouble navigating the content in this section, which makes me think we may want to break it down some; perhaps subsections instead of bullets? Or maybe we can just trim some? Or move stuff out elsewhere?
+Contains the overall narrative flow and scene composition.
 
-    Instead of `setting`, let's call that a `background` directive. We don't want an image file there; we'll want a set of paper cutouts, ultimately. But, we want the episode files to be simply-readable.
+*   **Top-Level:** May contain metadata directives (e.g., `/title(Episode 1: The Phantom Frege)`).
+*   **Scene Definition:** Episodes are composed of sequential `/scene` directives.
+    ```markdown
+    /scene(duration: 30, background: '../settings/a-public-park.md')
 
-    Maybe a scene should look something like:
+    # Scene Content - directives are processed based on timing attributes
 
-    /scene(duration:30,setting:../settings/a-public-park.md)
-    /music(start:0,duration:30,source:../music/happy-day.md)
-    /character(name:Alice,source:../characters/alice.md,x:-0.25,y:0.1,z:0.5)
-    /character(name:Bob,source:../characters/bob.md,x:0.75,y:0.15,z:0.5)
-    /move(start:0,duration:10,x:0.25,y:0.1,x:0.5,character:Alice)
-    /animate(start:0,duration:10,character:Alice) {
-        🚶‍♀️🙂😄
-    }
-    /dialog(start:10,duration:10,character:Alice) {
-        👋 Hi Bob! 😊 How's it going? 🤔
-    }
-    /dialog(start:20,duration:10,character:Bob) {
-        Not bad, Alice! 🧍 How are you?
-    }
+    # Load Assets for this Scene
+    /character(id: Alice, source: '../characters/alice.md', initialPos: [-0.2, 0.1, 0.5], initialPose: 'idle')
+    /character(id: Bob, source: '../characters/bob.md', initialPos: [0.75, 0.15, 0.5], initialPose: 'idle')
+    /music(id: bgm, source: '../music/happy-day.md', action: 'play', start: 0, volume: 0.8)
 
-    In this scene, Alice walks in from off-screen and greets Bob. Miscellaneous thoughts in here:
+    # Animation & Dialog Timeline
+    /move(character: Alice, start: 0, duration: 5, endPos: [0.25, 0.1, 0.5])
+    /animate(character: Alice, start: 0, duration: 5) { 🚶‍♀️🙂 } # Walk in, look neutral
+    /dialog(character: Alice, start: 5, duration: 4, audio: './audio/ep1_alice_01.mp3') { 👋 Hi Bob! 😊 How's it going? } # Wave, then smile. Audio generation triggered if file missing.
+    /animate(character: Bob, start: 5, duration: 1) { 🤔 } # Bob turns head? (Pose)
+    /dialog(character: Bob, start: 9, duration: 4, audio: './audio/ep1_bob_01.mp3') { Not bad, Alice! 🙂 How are you? }
+    /animate(character: Alice, start: 9, duration: 4) { 😊 } # Keep smiling while Bob talks
 
-    * Music and scene files can just be externalized. We'll want to reuse these a lot! Even from episode to episode, just like characters. (This is a good opportunity to simplify here.)
-    * Characters aren't just their artwork. I think standardizing on Markdown and branching out to more specific formats like JS only when needed might work here.
-    * We'll need a description of scenespace somewhere. I'm assuming x=0 is left, x=1 is right, y=0 is bottom, y=1 is top, z=0 is front, z=1 is off in the distance (and z=0.5 is standard for character placement in a scene). I'm a little nervous that a numeric scene-space will be hard for an LLM to manage, so maybe someday we'll want a microformat where we can say "/move(character:Bob,to:near[Alice]) or something.
-    * I'm realizing we'll need something like an `animate` directive for times when we want a character to change expressions or pose when they're not talking.
-    * Can't currently animate non-characters with this format, but I guess that's fine.
-}
+    # Stop Music at end of scene (optional)
+    /music(id: bgm, action: 'stop', start: 29)
 
-## 4. Character Module Interface (`.js`) 🧑‍🎨
+    /scene! # End of scene block (optional marker, parsing stops at next /scene or EOF)
+    ```
+*   **Scene Space:** Coordinates (`initialPos`, `endPos`, etc.) use a normalized system:
+    *   `x`: -1 (left edge) to +1 (right edge)
+    *   `y`: 0 (bottom edge) to 1 (top edge) - Maybe adjust based on aspect ratio? Let's start with 0-1.
+    *   `z`: 0 (closest to camera) to 1 (furthest). Default character plane might be 0.5.
+    *   *(Design Note: LLM interaction with numeric coords needs monitoring. Future: symbolic placement like `pos: near(Bob)`)*
+*   **Timing:** `start` and `duration` attributes (in seconds) control the timeline within a scene.
 
-Located via `--character-lib`. Each file defines one character.
+### 3.2. Character Definition (`character.md`)
 
-*   **Exports**: A module should export an object with at least:
-    *   `name`: (String) Character's display name.
-    *   `ttsVoiceSettings`: (Object) Parameters for the TTS engine (e.g., `{ voiceId: 'en-US-Wavenet-F', pitch: -2 }`). Used when generating audio for `dialog` directives.
-    *   `poses`: (Object) A map where keys are pose names (e.g., `'idle'`, `'walking'`, `'surprised'`) and values are artwork data (see below) or functions returning artwork data. Can potentially reference/extend a base pose library.
-    *   `getArtworkData(poseName, expressionName)`: (Function) Takes pose and expression names (expression might modify base pose data), returns artwork data structure. Allows dynamic artwork generation if needed.
-*   **Trace:** `SPEC: 🧑‍🎨 Character Representation`, `SPEC: 🗣️ Voice Performance`
+Defines a character's appearance, voice, and potentially default behaviors.
 
-/comment(user:woe) {
-    Let's actually do characters as Markdown files too, it'll make it easier to simply describe them. We also don't want poses to be character-specific; let's have a pose library we can reuse across characters (maybe a separate section and file type?)
+```markdown
+# Alice
 
-    Voice is good; let's just have a `/voice(settings=voice.json) { Semantic description of a voice }` directive that we use to define that. Again, this can be rendered using the if-file-exists approach; when it doesn't exist, we'll ask an LLM or something to generate voice settings in that file.
+A cheerful programmer ghost 👻💻 with translucent blue skin and glowing circuit patterns.
 
-    Similarly, we should have an `/artwork(renderer=./artwork.js) { Semantic description of character's appearance }`.
+/voice(settings: './alice_voice.json') {
+  A clear, friendly female voice, slightly synthesized or ethereal, mid-range pitch. Use Google TTS Wavenet-F with slight reverb.
+} voice!
 
-    The name doesn't need its own directive; maybe we infer that from the top-level section title?
-}
+/artwork(renderer: './alice_renderer.js') {
+  Render as layered 2D shapes. Key features: translucent blue circle head, simple rectangle body, glowing lines for circuits. Eyes are simple white ovals. Allow standard expressions (smile, frown, surprised). Default pose is floating slightly.
+} artwork!
+
+# Optional: Default pose/expression
+/default(pose: 'idle', expression: 'neutral')
+```
+
+*   **Name:** Inferred from the H1 heading (`# Alice`).
+*   `/voice`: Specifies voice characteristics.
+    *   `settings`: Path to a JSON file containing specific TTS parameters (e.g., `{ "provider": "google", "voiceId": "en-US-Wavenet-F", "pitch": 0, "effects": ["reverb_small"] }`).
+    *   **Generation:** If `settings` file doesn't exist, the build tool uses the body description (via an LLM helper, like `povgoblin`) to generate the JSON content.
+*   `/artwork`: Specifies visual appearance.
+    *   `renderer`: Path to a JS module responsible for translating pose/expression requests into the standard shape array format (see Section 5).
+    *   **Generation:** If `renderer` file doesn't exist, an LLM helper *could* attempt to generate a basic renderer based on the body description, outputting simple shapes. (Complexity: High - maybe start with requiring this file manually).
+*   **Trace:** `SPEC: 🧑‍🎨 Character Representation`, `SPEC: 🗣️ Voice Performance`, `SPEC: 🖼️ Artwork Integration`
+
+### 3.3. Music Definition (`music.md`)
+
+Defines a reusable piece of music.
+
+```markdown
+# Happy Day Theme
+
+A light, upbeat tune suitable for pleasant outdoor scenes.
+
+/score(sheet: './happy_day.abc', audio: './happy_day.mp3') {
+  Tempo: 120bpm
+  Key: C Major
+  Instrumentation: Piano main melody, light strings accompaniment.
+  Mood: Cheerful, simple, slightly whimsical.
+  Structure: AABA, approx 30 seconds loopable.
+} score!
+```
+
+*   `/score`: Defines the music asset.
+    *   `sheet`: Path to the canonical music notation (ABC format preferred).
+    *   `audio`: Path to the rendered audio file (MP3/OGG).
+    *   **Generation:**
+        1.  If `sheet` is missing, use LLM + body description to generate ABC content into the `sheet` file.
+        2.  If `audio` is missing, render the `sheet` file (ABC -> MIDI -> Audio) and save to the `audio` path.
+*   **Trace:** `SPEC: 🎶 Music Integration`
+
+### 3.4. Background Definition (`background.md`)
+
+Defines a reusable scene background using artwork directives.
+
+```markdown
+# A Public Park Setting
+
+A simple park with grass, a tree, and a bench.
+
+/artwork(renderer: './park_renderer.js') {
+  Layered 2D shapes. Bottom layer: solid green rectangle (grass). Middle layer: brown rectangle trunk + green circle canopy (tree) on the left. Front layer: simple brown polygon bench on the right. Blue rectangle sky at top.
+} artwork!
+```
+
+*   `/artwork`: Similar to characters, defines the visual elements. Static backgrounds might use simpler renderers or directly embed shape data.
+*   **Trace:** `SPEC: 📖 Story Structure & Scenes`
+
+## 4. Pose & Expression Library (Emoji Microformat) 😀🚶‍♀️
+
+Poses and expressions are primarily controlled via standard Unicode emoji within `/dialog` and `/animate` directive bodies.
+
+*   **Mapping:** A global configuration (e.g., `pose_map.json`) maps specific emoji to:
+    *   **Pose Keys:** e.g., `🚶‍♀️` -> `'walk'`, `🧍` -> `'idle'`, `👋` -> `'wave'`. These keys are passed to the character's artwork renderer.
+    *   **Expression Keys:** e.g., `🙂` -> `'neutral'`, `😀` -> `'happy'`, `😢` -> `'sad'`, `🤔` -> `'thinking'`. These keys are also passed to the renderer.
+*   **Interpretation:**
+    *   The parser extracts emoji sequences.
+    *   The runtime player applies the corresponding pose/expression change when the emoji is encountered in the timeline associated with the directive's duration.
+    *   Multiple emoji in a sequence imply a sequence of changes within the directive's duration. `/animate(duration: 2) { 🤔 V }` -> Thinking for 1s, Peace sign for 1s.
+*   **Extensibility:** Character artwork renderers can implement custom mappings or handle standard keys appropriately. The global map defines engine defaults.
+*   **Trace:** `SPEC: 🕺 Animation Logic`
 
 ## 5. Artwork Representation & Rendering 🖼️
 
-*   **Data Format**: The `getArtworkData` function (or `poses` map values) returns an array of shape objects, as specified previously:
+*   **Data Format (Runtime):** Character/Background `/artwork` renderers (`.js` modules) must ultimately provide data as an array of shape objects when called by the player.
     ```javascript
-    // Example return value for getArtworkData('idle', 'neutral')
+    // Example output from alice_renderer.js for getArtworkData('idle', 'happy')
     [
-      { type: 'circle', color: '#FACE00', radius: 30, x: 0, y: -40, z: 1 }, // Head
-      { type: 'rect', color: '#A0A0A0', width: 10, height: 50, x: 0, y: 0, z: 0 }, // Body
-      // ... etc ...
+      // Shapes sorted by Z-index by renderer? Or player? Player responsibility.
+      { id: 'body', type: 'polygon', points: [[-5,-25],[5,-25],[5,25],[-5,25]], color: '#A0A0A0AA', x: 0, y: 0, z: 0.5, rotation: 0 }, // Body - relative coords
+      { id: 'head', type: 'ellipse', color: '#0000FFAA', rx: 15, ry: 15, x: 0, y: 35, z: 0.51 }, // Head
+      { id: 'eyeL', type: 'circle', color: '#FFFFFF', radius: 3, x: -5, y: 40, z: 0.52 }, // Left Eye (relative to head's center?) - Coordinate system needs refinement. Let's assume relative to character anchor for now.
+      { id: 'eyeR', type: 'circle', color: '#FFFFFF', radius: 3, x: 5, y: 40, z: 0.52 }, // Right Eye
+      { id: 'mouth', type: 'polygon', points: [[-5, 30], [0, 32], [5, 30]], fill: 'none', stroke: '#FFFFFF', lineWidth: 1, x: 0, y: 0, z: 0.52 } // Simple smile line
+      // Clipping shapes TBD. Rotation anchor implicit (shape's x,y)?
     ]
     ```
-    *   Supported `type`: `circle`, `rect`, `polygon`. `color` can include alpha (e.g., `#RRGGBBAA`). `x`, `y`, `z` for positioning and layering. Coordinates are relative to the character's anchor point on screen.
-*   **Renderer Interface**: The player embedded in the output HTML will expect a rendering module conforming to an interface like:
-    *   `init(canvasElement)`: Initialize the rendering context.
-    *   `clear()`: Clear the canvas.
-    *   `drawShapes(shapes, baseX, baseY, scale)`: Draw an array of shape objects at a specific screen position and scale.
-    *   Implementations for Canvas 2D, WebGL, SVG can be developed. Initial implementation: Canvas 2D.
+    *   **Shapes:** `circle`, `ellipse`, `polygon`.
+    *   **Properties:** `id` (optional string), `type`, `color` (CSS format, includes alpha), `x`, `y`, `z` (relative position), `rotation` (degrees, optional), shape-specific props (`radius`, `rx`, `ry`, `points`), drawing style (`fill`, `stroke`, `lineWidth`, optional).
+*   **LLM Bridge:** The *body* of the `/artwork` directive provides the semantic description. The associated `renderer.js` file is the **crucial bridge**, responsible for interpreting this description (or specific pose/expression keys) and generating the above shape array. Simple renderers might ignore the description and just use pose keys. Complex ones might use the description to modify base shapes.
+*   **Runtime Renderer Interface:** The player uses a swappable rendering module (Canvas2D, WebGL, SVG) with an interface like:
+    *   `init(containerElement)`
+    *   `renderFrame(shapeArrays)`: Takes a list of shape arrays (one per character/background element) and draws them. Handles layering (z-index), positioning (baseX/Y from directives), and scaling.
+    *   Initial implementation: Canvas 2D.
 *   **Trace:** `SPEC: 🖼️ Artwork Integration`, `SPEC: 🛠️ Technology Stack (Rendering Interface)`
 
-/comment(user:woe) {
-    Hm, I think we'll want more shapes here, as well as the ability to support anchored shape rotation (which will make animation easier). Wouldn't hurt to give shapes an `id` as well for stuff like keyframing. I'm thinking we'll want ovals/ellipses, and maybe even things like clipping shapes (e.g. to use a half-circle for a character's foot). On the other hand, we could omit `rect` since we have `polygon`.
+## 6. Music Rendering (ABC) 🎶
 
-    Importantly, this is going to need to be a little rendering language which looks reasonably-fluent to LLMs: They'll need to be able to work out where eyes go, where noses go, and so on. Starting with something simple and easy-to-render makes sense, but we'll want to push back and design a more LLM-oriented interface to produce that easy-to-render format at some point.
-}
-
-## 6. Music Integration (ABC Notation) 🎶
-
-*   **Format**: ABC Notation (`.abc` files). Text-based, good for LLMs, standard tools exist. Example:
-    ```abc
-    X: 1
-    T: Spooky Theme
-    M: 4/4
-    L: 1/8
-    K: Am
-    "Am"A2 E2 G2 E2 | "G"B2 G2 d2 G2 | "Am"c4 B4 | A8 |]
-    ```
-*   **Rendering**: Use Node.js libraries to orchestrate:
-    1.  `abcjs`: Parse ABC to MIDI data structure or potentially directly to WAV (if library supports it).
-    2.  MIDI-to-Audio Renderer: Use a tool like `timidity++` (via child process or Node wrapper) with a suitable SoundFont (e.g., `FluidR3_GM`) to convert MIDI data/files to MP3/OGG/WAV.
+*   **Format:** ABC Notation (`.abc`).
+*   **Generation:** Uses LLM prompt (from `/score` body) if `.abc` file is missing.
+*   **Rendering:** Uses `abcjs` + `timidity++` (or similar SoundFont synth) triggered by the build process if the target `.mp3` is missing.
 *   **Trace:** `SPEC: 🎶 Music Integration`
 
-/comment(user:woe) {
-    Superb! One note: Let's assume that music starts off as Markdown files which contain a `score` directive like:
+## 7. Voiceover Generation 🗣️
 
-    /score(sheet:something.abc,audio:something.mp3) {
-        A haunting song titled Uncanny Melody, played on the cello.
-    }
-
-    These live in separate Markdown files so they can be reused like Characters.
-}
-
-## 7. TTS Integration 🗣️
-
-*   **Workflow**:
-    1.  Parser identifies `dialog` directive.
-    2.  Extracts emoji for animation cues, cleans text for TTS.
-    3.  Checks if `voice` file exists in `--audio-cache`.
-    4.  If not found or `--force-regenerate`:
-        *   Retrieve `ttsVoiceSettings` from character module.
-        *   Call configured TTS API (e.g., Google Cloud TTS, AWS Polly via SDKs) with cleaned text and settings.
-        *   Save returned audio to the specified `voice` path.
-*   **Configuration**: TTS provider credentials and API choice configured globally for the build tool (e.g., via environment variables or a config file).
+*   **Trigger:** `/dialog` directive specifies an `audio` file path.
+*   **Workflow:**
+    1. Build checks if `audio` file exists.
+    2. If not:
+        *   Load character's `/voice` settings JSON (generate JSON via LLM from description if missing).
+        *   Clean dialog text (remove emoji).
+        *   Call configured voice service API (e.g., Google TTS) with text and settings.
+        *   Save output to the `audio` path.
+*   **Requires:** Pre-configured API keys/credentials for the chosen voice service.
 *   **Trace:** `SPEC: 🗣️ Voice Performance`
 
-/comment(user:woe) {
-    nit: Let's call this Voice or Voiceover integration instead of TTS.
+## 8. Build Process Flow (Simplified) ⚙️➡️📄
 
-    Instead of using an audio cache, I think we should have an `audio` attribute on `dialog` directives. In the future, maybe we can add some smart defaults when this is absent, but let's just require it for now.
-}
-
-## 8. Build Process Flow ⚙️➡️📄
-
-1.  **Initialization**: Parse CLI arguments, identify input/output paths, libraries.
-2.  **Episode Parsing**: Read the main `.md` file. Parse directives sequentially.
-3.  **Asset Resolution & Generation (Iterative)**:
-    *   For `characters` directive: Load specified JS modules. Validate exports.
-    *   For `dialog` directive: Check/generate TTS audio, cache path. Store text, character, audio path, and extracted emoji cues.
-    *   For `music` directive: Check/generate ABC notation (via LLM if needed), check/render audio, cache paths. Store action and audio path.
-    *   Store other directives (setting, actions) in an ordered event list.
-4.  **Code Generation**: Generate JavaScript code for the embedded player:
-    *   Include character data (or references).
-    *   Include the ordered event list (actions, dialog cues + audio paths, music cues + audio paths, setting changes).
-    *   Include animation logic (how to interpret events and update state).
-    *   Include the chosen rendering module code (e.g., Canvas 2D renderer).
-5.  **HTML Emission**: Create the final `.html` file:
-    *   Basic HTML structure.
-    *   CSS for styling (player UI, subtitles).
-    *   Embedded player JS (generated in step 4).
-    *   Necessary runtime libraries (e.g., `howler.js` for audio management if needed).
-
-/comment(user:woe) {
-    Great overview, really helped clarify the complexity. (Note that this may need updating to reflect revisions elsewhere based on other comments)
-}
+1.  **Start**: `node build.js episode.md`
+2.  **Parse Entry Point**: Use `smarkup` + `necronomicon` to parse `episode.md`.
+3.  **Directive Execution (Build Time)**: `necronomicon` executes directives:
+    *   `/scene`: Defines scope for timeline processing.
+    *   `/character`, `/music`, `/background`: Recursively parse linked `.md` files, caching definitions. Execute contained `/voice`, `/artwork`, `/score` directives to ensure assets (JSON settings, renderers, ABC, MP3) are generated *if missing*, potentially calling LLM helpers. Store paths to required assets.
+    *   `/move`, `/animate`, `/dialog`, `/music (play/stop)`: Collate these into a timed event list associated with the current scene. For `/dialog`, ensure the `audio` path is resolved (triggering generation if needed). Extract emoji cues from `/dialog`, `/animate`.
+4.  **Code Generation**: Assemble data for the runtime player:
+    *   Character definitions (paths to renderers, voice settings).
+    *   Background definitions.
+    *   Music definitions (path to audio).
+    *   The timed event list for all scenes.
+    *   Global pose/expression emoji map.
+5.  **HTML Emission**: Bundle player runtime JS, renderer JS (e.g., Canvas 2D), CSS, and the generated episode data into a single `.html` file.
 
 ## 9. Output HTML Structure <html>
 
-*   A single HTML file.
-*   `<style>` block for CSS.
-*   `<canvas>` (or other) element for rendering.
-*   `<script>` block containing:
-    *   The renderer implementation (Canvas/WebGL/SVG).
-    *   The core player logic (event loop, state management).
-    *   The episode-specific data (event list, character info, audio paths).
-    *   Minimal UI controls (Play/Pause).
+*   Single HTML file.
+*   CSS for player UI, subtitles.
+*   `<canvas>` (or other) element.
+*   Bundled JavaScript:
+    *   Player Core (event loop, state management, audio handling via Howler.js?).
+    *   Renderer Implementation (Canvas 2D initially).
+    *   Episode Data (event list, asset paths/data).
+    *   Minimal UI controls (Play/Pause, maybe timeline scrub).
 
 ## 10. Technology Choices (Initial)
 
-*   **Markdown Parser**: `marked` or `markdown-it` with plugin support for custom directives.
-*   **Music Rendering**: `abcjs` (for ABC->MIDI/intermediate format), Node wrapper around `timidity++` or similar synth + SoundFont for MIDI->Audio.
-*   **TTS**: Node SDKs for cloud providers (Google TTS, AWS Polly).
-*   **Audio Playback (Runtime)**: HTML5 `<audio>` or a library like `howler.js` for better control.
-*   **Renderer (Runtime)**: HTML Canvas 2D API.
+*   **Build Orchestration**: Node.js.
+*   **Directive Parsing/Execution**: `smarkup`, `necronomicon`.
+*   **Music Notation**: ABC (`.abc`).
+*   **Music Rendering**: `abcjs` + `timidity++`/SoundFont wrapper.
+*   **Voice Generation**: Cloud TTS SDKs (Google, AWS, etc.).
+*   **LLM Integration**: Use libraries like `phantomaton-gemini` (seen in `povgoblin`) for supervised generation loops.
+*   **Audio Playback (Runtime)**: `howler.js` recommended for better control over audio synchronization.
+*   **Renderer (Runtime)**: HTML Canvas 2D API initially, via swappable module.
 
-/comment(user:woe) {
-    Excellent. 
-}
+This revised design embraces modularity via Markdown files, simplifies configuration, clarifies the LLM-driven generation process for assets, and introduces emoji for intuitive animation control. Ready for the next stage of conjuration, Dr. Woe! 🪄✨👻
