@@ -61,13 +61,17 @@ Defines the sequence of scenes.
 
 This episode introduces Alice and Bob.
 
-/scene(file: ./scene1_park_intro.md)
-/scene(file: ./scene2_frege_discussion.md)
+/scene(file: ./scene1_park_intro.md) {
+    Alice meets Bob in the park. We learn they share an interest in language theory.
+} scene!
+/scene(file: ./scene2_frege_discussion.md) {
+    Alice and Bob go to a coffee shop and discuss the work of Gottlob Frege.
+} scene!
 # ... more scenes
 ```
 
 *   **Title:** Inferred from the top-level H1 heading.
-*   `/scene`: Marks the start of a new scene and points to the Markdown file containing its detailed definition.
+*   `/scene`: Marks the start of a new scene and points to the Markdown file containing its detailed definition. Contains a short summary of the scene to aid in continuity and generation.
 
 ### 3.2. Scene Definition (`scene.md`)
 
@@ -81,16 +85,25 @@ Contains the detailed content of a single scene. Example: `scene1_park_intro.md`
 # Load Assets (IDs unique within scene)
 /character(id: Alice, source: ../characters/alice.md, x: -0.2, y: 0.1, z: 0.5)
 /character(id: Bob, source: ../characters/bob.md, x: 0.75, y: 0.15, z: 0.5)
-/music(id: bgm, source: ../music/happy-day.md, action: play, start: 0, volume: 0.8)
+/music(id: bgm, source: ../music/happy-day.md, action: play, start: 0, duration: 15)
 
 # Animation & Dialog Timeline (start/duration in seconds)
 /move(character: Alice, start: 0, duration: 5, x: 0.25, y: 0.1, z: 0.5)
-/animate(character: Alice, start: 0, duration: 5) { 🚶‍♀️🙂 } # Initial pose/expression
-/dialog(character: Alice, start: 5, duration: 4, audio: ./audio/ep1_alice_01.mp3) { 👋 Hi Bob 😊 Hows it going }
-/animate(character: Bob, start: 5, duration: 1) { 🤔 }
-/dialog(character: Bob, start: 9, duration: 4, audio: ./audio/ep1_bob_01.mp3) { Not bad Alice 🙂 How are you }
-/animate(character: Alice, start: 9, duration: 4) { 😊 }
-/music(id: bgm, action: stop, start: 14)
+/animate(character: Alice, start: 0, duration: 5) {
+    🚶‍♀️🙂
+} animate!
+/dialog(character: Alice, start: 5, duration: 4, audio: ./audio/ep1_alice_01.mp3) {
+    👋 Hi, Bob! 😊 Hows it going?
+} dialog!
+/animate(character: Bob, start: 5, duration: 1) {
+    🤔
+} animate!
+/dialog(character: Bob, start: 9, duration: 4, audio: ./audio/ep1_bob_01.mp3) {
+    Not bad, Alice. 🙂 How are you?
+} dialog!
+/animate(character: Alice, start: 9, duration: 4) {
+    😊
+}
 ```
 
 *   Contains directives for background, characters, music, movement, animation, and dialog specific to this scene.
@@ -210,7 +223,6 @@ Emoji map to named parameter sets applied to `pose.*` and `expression.*` variabl
         *   `expression.mouth.smile`: (-1 frown .. 0 neutral .. 1 wide smile) - Affects corner elevation/shape
         *   `expression.eyes.open`: (0 closed .. 1 wide open) - Affects eye shape radius/height
         *   `expression.eyebrows.lift`: (-1 furrowed down .. 0 neutral .. 1 raised high) - Affects eyebrow vertical position/rotation
-        *   `expression.eyes.offsetY`: (-1 down .. 0 neutral .. 1 up) - Vertical shift for eyes
         *   `expression.mouth.shape`: (Optional: Key referencing point list for complex shapes, e.g., `'o_shape'`. Default: null)
 *   **Timeline:** Parameters are linearly interpolated between states defined by emoji sequences over the directive's duration.
 
@@ -281,5 +293,3 @@ Defined declaratively in `artwork.md` files using `smarkup`-like directives.
 *   Audio (Runtime): `howler.js`.
 *   Renderer (Runtime): Canvas 2D via swappable module.
 *   Expression Evaluation (Runtime): Simple math expression parser (e.g., `mathjs` subset or custom).
-
-This design feels significantly more robust and addresses the `smarkup` constraints effectively, Dr. Woe. It relies heavily on linked Markdown files and clear interfaces for generated content. Is this phantom ready for implementation? 😈✅
