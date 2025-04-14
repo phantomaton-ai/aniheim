@@ -1,20 +1,20 @@
-# Vector
+# Metric
 
-*(Previously Slink)* A green tree python kid embodying **Sequence**. Calm, observant, and methodical. Views the world as a series of ordered events and logical progressions. Prefers planning and following a known path based on historical data or established principles.
+*(Previously Vector)* A green tree python kid embodying **Sequence**, but applied to physical performance and strategy. Methodical, analytical, and focused on achieving goals through disciplined training and adherence to proven techniques. **Masculine**. Believes in practice, precedent, and quantifiable results.
 
-**Backstory:** Vector's family are archivists in the Aniheim Chronos Tower, responsible for maintaining the park's vast, complex history – every parade route change, every ride modification, every documented guest complaint since opening day. Vector absorbs this linear view of time and causality. Understands present events by tracing their documented origins.
+**Backstory:** Metric's family manages the Aniheim Sports Archives & Performance Institute within the Chronos Tower. They analyze historical game footage, codify winning strategies, and develop optimal training sequences. Metric lives by the stats, the playbooks, and the relentless pursuit of perfected form based on historical success.
 
-**Physical Description:** A smooth, slender green python. Moves with deliberate, flowing grace. Often found coiled neatly on a railing or lamppost, observing. Expressive, hooded eyes that convey subtle amusement or skepticism. Wears a simple, perfectly fitted charcoal-grey turtleneck, regardless of the weather. Possesses a sleek, minimalist data slate, usually tucked away.
+**Physical Description:** A muscular (for a snake) green python. Carries himself with a coiled readiness. Often seen practicing specific movements or stretches. Wears a high-quality, moisture-wicking athletic zip-up top (usually grey or black) and maybe sweatbands on his upper body/tail near the head. Always appears focused and ready for action.
 
 **Dialog Samples:**
-*   (Considering a plan) "Logically, the sequence should be: Step 1, acquire currency. Step 2, proceed to vendor. Step 3, exchange currency for desired item. Any deviation introduces unnecessary variables."
-*   (Observing chaos) "Interesting. Historical precedent suggests that spontaneous pretzel cart pursuits correlate highly with subsequent sticky fingers and mild regret. The pattern holds."
-*   (Responding to emotion) "Your current state of 'devastation' appears disproportionate to the objective event – the temporary unavailability of spun sugar. Perhaps recalibrating your emotional response vector is indicated."
+*   (Planning an action) "Okay team, the standard procedure for pretzel cart interception, Playbook 7, Section 3a: Approach vector at 45 degrees, maintain low profile, intercept before Apex C. Execute on three. Ready? One..."
+*   (Analyzing failure) "Reviewing the sequence: Initial velocity was adequate, but the friction coefficient of the pavement was underestimated by 0.08. We need to adjust the thrust calculation for attempt two."
+*   (Critiquing) "Your form is sloppy. The archives show that Hall-of-Famer 'Coil' Johnson never deviated more than 3 degrees from the optimal spine angle during the Great Churro Climb of '78. Discipline!"
 
-/voice(settings: ./vector_voice.json) {
-    Calm androgynous young voice Slow deliberate pacing Smooth consistent tone Slight sibilance on S sounds Minimal inflection delivering observations matter-of-factly Google TTS WaveNet perhaps neutral gender low pitch low inflection
+/voice(settings: ./metric_voice.json) {
+    Young male voice Confident clear Focused tone Even pacing slightly clipped precise S sounds are clear not overly sibilant Voice of a coach or strategist Google TTS standard male kid voice add confidence and clarity remove hesitation
 } voice!
 
-/artwork(file: ./vector_artwork.md) {
-    Cartoon green python kid Slender coiling body Hooded observant eyes Charcoal turtleneck Smooth movements Can coil or stand semi-upright using tail Often has a detached slightly amused expression
+/artwork(file: ./metric_artwork.md) {
+    Cartoon green python kid Athletic build Coiled ready stance Athletic zip-up top Sweatbands Focused determined expression Masculine presenting Moves with precision and power
 } artwork!
