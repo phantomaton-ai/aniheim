@@ -1,20 +1,20 @@
-# Logos
+# Dio
 
-*(Previously Tarski)* An ancient jumping spider embodying **Completeness** (and its inherent limitations). **Gender-fluid**, appearing in various forms and voices. Acts as a trickster sage, posing paradoxes and questions about systems, definitions, and whether any description can fully capture reality. Understands the park's deep structure, its rules, and where they break down. Hints at the 'slippery nature of truth' through their interactions.
+*(Inspired by Diogenes/Deum)* An ancient jumping spider embodying **Completeness** and its paradoxical nature. **Gender-fluid**. Acts as a trickster sage, questioning assumptions, definitions, and the perceived completeness of any system – often with a cynical or detached edge reminiscent of Diogenes, while subtly hinting at the 'slippery nature of truth'. Observes from a foundational perspective, seeing the gaps in the park's logic.
 
-**Backstory:** Logos seems woven into the park's very conceptual framework, perhaps a leftover from the original architects' debates about logic and park design. They exist in the meta-narrative, the footnotes of the rulebook, the system's error messages. Logos doesn't follow park narratives; they observe and occasionally nudge them by exposing their boundaries.
+**Backstory:** Dio's origins are unknown, perhaps predating the park itself, existing in the conceptual space where the rules were formed and found wanting. They haunt the park's logical framework, living simply within its cracks and challenging its conventions, less a resident and more a living commentary on its structure.
 
-**Physical Description:** True form is a wise, ancient-looking jumping spider, grey-brown and fuzzy, with many deep, knowing eyes. Default appearance might involve simple, flowing, neutral-coloured robes or tunic. Most often appears disguised – as a park statistician questioning data completeness, a philosopher debating definitions by a fountain, an architect pointing out unforeseen consequences of a design, a mapmaker whose legends are recursive. The disguise may subtly shift or contain 'glitches'.
+**Physical Description:** True form is a wise, ancient-looking jumping spider, grey-brown and fuzzy, with many deep, all-seeing eyes. Default appearance might involve simple, unadorned, perhaps slightly ragged, neutral-coloured robes or tunic. Most often appears disguised – as a minimalist street philosopher questioning consumerism, a park cartographer pointing out that the map's edge isn't the world's edge, a logician presenting self-referential paradoxes, or simply a detached observer sitting in an unconventional spot. Disguises often have a stark simplicity or subtle flaw.
 
 **Dialog Samples:**
-*   (As Statistician) "Your sample size includes all *visible* discarded popcorn boxes. An admirable attempt at completeness. But what of the *unseen* boxes? Can your model account for that which it cannot observe?"
-*   (As Philosopher) "You define 'fun' by the park's posted attractions. A complete definition? Or does true 'fun' reside outside the officially sanctioned list? Where does the definition end?"
-*   (As Architect) "This blueprint perfectly details every planned path. But does it account for the paths worn by desire, by shortcut, by serendipity? Is any plan ever truly *complete* once reality interacts with it?"
+*   (As street philosopher) "You chase the spun sugar, believing it complete happiness. But is happiness found in acquisition, or in wanting nothing? Like this empty tin can – perfectly complete in its function."
+*   (As cartographer) "This map shows every path *permitted*. It claims completeness within its defined boundaries. But what exists *beyond* the ink? Does the map's silence mean emptiness?"
+*   (As logician) "The park rules are said to be complete and consistent. Rule 1: Follow all rules. Rule 2: Rule 1 is optional on Tuesdays. If today is Tuesday, is the system complete? Is it consistent?"
 
-/voice(settings: ./logos_voice.json) {
-    Fluid gender voice Calm unnervingly knowing quality Shifts subtly in pitch tone and accent depending on disguise Always retains a core intellectual slightly detached quality May use formal logical language or simple probing questions Synthesized or processed quality enhances ambiguity Google TTS custom voice blend or processed WaveNet varying parameters
+/voice(settings: ./dio_voice.json) {
+    Fluid gender voice Calm unnervingly knowing quality Shifts subtly in pitch tone and accent depending on disguise Always retains a core intellectual slightly detached sometimes cynical quality May use formal logical language or simple Socratic questions Synthesized or processed quality enhances ambiguity Google TTS custom voice blend or processed WaveNet varying parameters
 } voice!
 
-/artwork(file: ./logos_artwork.md) {
-    Base form Ancient jumping spider grey-brown fuzzy Deep knowing eyes Simple neutral robes Often disguised Statistician Philosopher Architect Mapmaker etc Disguises often subtly shift or glitch Gender expression fluid neutral or shifts with disguise Calm knowing presence holds paradoxical objects sometimes
+/artwork(file: ./dio_artwork.md) {
+    Base form Ancient jumping spider grey-brown fuzzy Deep knowing eyes Simple neutral robes Often disguised Philosopher Cartographer Logician etc Disguises often starkly simple or subtly flawed Gender expression fluid neutral or shifts with disguise Calm knowing detached trickster presence Sometimes holds simple object tin can stick etc
 } artwork!
