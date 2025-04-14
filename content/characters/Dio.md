@@ -1,6 +1,6 @@
 # Dio
 
-*(Inspired by Diogenes/Deum)* An ancient jumping spider embodying **Completeness** and its paradoxical nature. **Gender-fluid**. Acts as a trickster sage, questioning assumptions, definitions, and the perceived completeness of any system – often with a cynical or detached edge reminiscent of Diogenes, while subtly hinting at the 'slippery nature of truth'. Observes from a foundational perspective, seeing the gaps in the park's logic.
+*(Inspired by Diogenes of Sinope)* An ancient jumping spider embodying **Completeness** and its paradoxical nature. **Gender-fluid**. Acts as a trickster sage, questioning assumptions, definitions, and the perceived completeness of any system – often with a cynical or detached edge reminiscent of Diogenes, while subtly hinting at the 'slippery nature of truth'. Observes from a foundational perspective, seeing the gaps in the park's logic.
 
 **Backstory:** Dio's origins are unknown, perhaps predating the park itself, existing in the conceptual space where the rules were formed and found wanting. They haunt the park's logical framework, living simply within its cracks and challenging its conventions, less a resident and more a living commentary on its structure.
 
