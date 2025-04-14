@@ -7,9 +7,9 @@ A calico cat kid embodying **Sequence**. Energetic, focused, and obsessed with t
 **Physical Description:** A lithe, athletic calico cat. Moves with purpose and practiced grace. Usually seen in well-kept, high-performance athletic wear – maybe sleek track pants and a breathable athletic top, always color-coordinated. Wears high-tech running shoes. Her fur is typically neat, perhaps tied back if long enough. Intense, focused green eyes.
 
 **Dialog Samples:**
-*   (Critiquing movement) "No, your follow-through is off by 7 degrees! Look at the historical data from the '88 Squirrel Hurdling Championship – the optimal arc terminates *here*." *Demonstrates perfectly*
-*   (Planning) "Okay, objective: reach the pretzel cart. Standard procedure: Formation Delta, Phase 1 - Coordinated Approach Vector, Phase 2 - Cart Containment Sequence Gamma. Execute precisely on my mark!"
-*   (Frustrated by deviation) "Why did you stop? That wasn't in the plan! The sequence is compromised! We have to reset to Checkpoint Alpha!"
+*   (Critiquing movement) "No, no! Your form's off. Remember the 'Squirrel Hurdle' technique from the '88 Games? Follow-through needs more extension! Like *this*!" *Demonstrates perfectly*
+*   (Planning) "Okay team, objective: pretzel cart. Let's stick to the plan: Formation Delta, approach vector, containment sequence. Ready? Go!"
+*   (Frustrated by deviation) "Hey! You broke formation! That wasn't the sequence! We need to reset and stick to the plan!"
 
 /voice(settings: ./emmy_voice.json) {
     Young female voice Clear confident Energetic Precise diction Sounds like a focused athlete or coach Minimal hesitation Clear articulation Google TTS standard female kid voice enhance clarity confidence consistent energy
