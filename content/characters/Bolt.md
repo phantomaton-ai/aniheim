@@ -1,20 +1,20 @@
-# Rhythm
+# Bolt
 
-*(Previously Tempo)* A honeybee kid embodying **Iteration**. Precise, pattern-focused, and obsessed with the *correctness* of form and process. **Non-binary**. Finds comfort in predictable loops and perfected routines, whether in code, music, or synchronized diving.
+*(Previously Rhythm/Tempo)* A honeybee kid embodying **Selection**. Energetic, confident, and focused on making the *best*, fastest, most effective choice in any situation. **Masculine**. Views the world as a series of options and challenges to be overcome with decisive action and optimal strategy. Can be competitive.
 
-**Backstory:** Rhythm's family is deeply integrated into the Aniheim Parks Operations Guild, specifically the "Rhythm & Flow" division that handles parade choreography timing, animatronic synchronization, fountain display programming, and queue pulse management. They believe harmony comes from perfectly executed repetition. Rhythm applies this everywhere.
+**Backstory:** Bolt's family are key members of Aniheim's 'Swarm Dispatch', the elite rapid response unit that handles everything from locating lost parents to optimizing pretzel cart deployment and choosing the fastest parade detour routes during unexpected squirrel incidents. They value speed, decisiveness, and picking the winning strategy. Bolt sees every situation as a chance to choose the champion path.
 
-**Physical Description:** A neat, compact honeybee. Antennae are always perfectly parallel. Wears a sharp, well-maintained navy blue jumpsuit with thin silver piping – reminiscent of a marching band uniform or technical wear. Polished black tap shoes (for impromptu rhythm checks). Keeps small tuning fork and metronome in accessible pouches. Goggles are clean, worn precisely on the forehead.
+**Physical Description:** A fit, athletic honeybee with a determined expression. Often strikes a dynamic pose. Wears a sleek, aerodynamic yellow and black zip-up jacket (like a racing uniform) over dark shorts, and high-performance athletic shoes. Keeps antennae angled slightly forward, ready for action. Wears wrap-around polarized goggles, usually perched on his head.
 
 **Dialog Samples:**
-*   (Observing movement) "The cadence is off. Observe: step, pause, step, *half*-pause. The established pattern requires a full pause. This deviation compromises the entire procession's harmonic integrity."
-*   (Correcting someone) "Technically, the optimal trajectory for catching that falling ice cream involves a parabolic arc calculated thusly, not simply flailing. Let's review the kinematic sequence."
-*   (Finding comfort) "This chaos is... unstructured. I need to recalibrate. *Taps foot steadily, humming a precise C# scale* Okay. Loop established. Ready to re-engage."
+*   (Assessing options) "Okay, Plan A: direct intercept. Plan B: flank via the topiaries. Plan C: create a diversion with Slink's discarded apple core. Analysis: Plan A offers optimal speed-to-target ratio. Engaging Plan A!"
+*   (Reacting to challenge) "Obstacle detected! Calculating optimal bypass vector... Found! Evasive maneuver Delta-7 executed! We lost maybe 0.8 seconds. Acceptable."
+*   (Encouraging others) "Come on team, pick up the pace! Sitting around analyzing is suboptimal! Choose a direction and commit! Victory favors the decisive!" *Zooms slightly ahead.*
 
-/voice(settings: ./rhythm_voice.json) {
-    Young clear voice Androgynous Precise steady rhythm Slight resonant buzz quality almost like a tuning fork particularly on sustained vowels Less nasal more pure tone than before Google TTS maybe a neutral WaveNet voice stable pitch and rate subtle synthesized resonant quality
+/voice(settings: ./bolt_voice.json) {
+    Young male voice Confident energetic Clear clipped delivery Speaks quickly making decisive statements Often uses sports or tactical jargon Google TTS standard male kid voice boost energy confidence speed clarity
 } voice!
 
-/artwork(file: ./rhythm_artwork.md) {
-    Cartoon honeybee kid Compact neat build Navy blue jumpsuit with silver piping Black tap shoes Goggles Antennae Non-binary appearance Precise movements Focus on form and rhythm Holds tuning fork or metronome sometimes
+/artwork(file: ./bolt_artwork.md) {
+    Cartoon honeybee kid Athletic build Yellowblack racing-style jacket Athletic shoes Wrap-around goggles Determined expression Masculine presenting Dynamic action poses Often looks focused ahead
 } artwork!
