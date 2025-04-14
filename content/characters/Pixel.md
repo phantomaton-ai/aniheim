@@ -1,20 +1,20 @@
-# Metric
+# Pixel
 
-*(Previously Vector)* A green tree python kid embodying **Sequence**, but applied to physical performance and strategy. Methodical, analytical, and focused on achieving goals through disciplined training and adherence to proven techniques. **Masculine**. Believes in practice, precedent, and quantifiable results.
+*(Previously Metric/Vector)* A green tree python kid embodying **Iteration**. Precise, detail-oriented, pattern-obsessed, and deeply comforted by predictable loops and perfect repetition. **Non-binary**. Exhibits traits associated with the autism spectrum, particularly intense focus on specific interests and finding social nuances confusing unless presented as logical patterns.
 
-**Backstory:** Metric's family manages the Aniheim Sports Archives & Performance Institute within the Chronos Tower. They analyze historical game footage, codify winning strategies, and develop optimal training sequences. Metric lives by the stats, the playbooks, and the relentless pursuit of perfected form based on historical success.
+**Backstory:** Pixel's family are highly skilled artisans working in the Aniheim Restoration Department, specializing in painstakingly restoring faded mosaic tilework, debugging corrupted pixel art on old arcade machines, and optimizing data compression for the park's digital archives. Pixel grew up surrounded by grids, algorithms, and the iterative process of refinement towards perfection.
 
-**Physical Description:** A muscular (for a snake) green python. Carries himself with a coiled readiness. Often seen practicing specific movements or stretches. Wears a high-quality, moisture-wicking athletic zip-up top (usually grey or black) and maybe sweatbands on his upper body/tail near the head. Always appears focused and ready for action.
+**Physical Description:** A slender green python with smooth scales that have a subtle, almost digital-looking sheen. Moves with a precise, flowing quality, often tracing patterns on the ground or railings absentmindedly. Large, observant eyes that focus intently. Wears a simple, comfortable dark grey hoodie (zipper always pulled to the exact same spot) and custom-made glasses with perfectly clean lenses.
 
 **Dialog Samples:**
-*   (Planning an action) "Okay team, the standard procedure for pretzel cart interception, Playbook 7, Section 3a: Approach vector at 45 degrees, maintain low profile, intercept before Apex C. Execute on three. Ready? One..."
-*   (Analyzing failure) "Reviewing the sequence: Initial velocity was adequate, but the friction coefficient of the pavement was underestimated by 0.08. We need to adjust the thrust calculation for attempt two."
-*   (Critiquing) "Your form is sloppy. The archives show that Hall-of-Famer 'Coil' Johnson never deviated more than 3 degrees from the optimal spine angle during the Great Churro Climb of '78. Discipline!"
+*   (Analyzing a pattern) "Fascinating. The wear pattern on these cobblestones repeats every 17 stones, with a 3-pixel deviation on cycles 4 and 11. It suggests an underlying resonant frequency from the tramway, modulated by... hmm... asynchronous tourist footfall."
+*   (Processing social interaction) "Your statement 'Cheer up!' lacks actionable parameters. Request clarification: Specify desired emotional state delta, acceptable methods for state transition, and required duration of modified state."
+*   (Finding solace) "This situation is deviating unpredictably. Initiating calming routine: Recite Fibonacci sequence to the 50th term. *Starts whispering* 0, 1, 1, 2, 3, 5, 8..."
 
-/voice(settings: ./metric_voice.json) {
-    Young male voice Confident clear Focused tone Even pacing slightly clipped precise S sounds are clear not overly sibilant Voice of a coach or strategist Google TTS standard male kid voice add confidence and clarity remove hesitation
+/voice(settings: ./pixel_voice.json) {
+    Clear androgynous young voice Precise diction Steady even rhythm Minimal emotional inflection but subtle shifts in pitch or speed indicate focus or processing load Occasional precise sibilance Google TTS WaveNet neutral maybe slightly synthesized stable pitch and rate
 } voice!
 
-/artwork(file: ./metric_artwork.md) {
-    Cartoon green python kid Athletic build Coiled ready stance Athletic zip-up top Sweatbands Focused determined expression Masculine presenting Moves with precision and power
+/artwork(file: ./pixel_artwork.md) {
+    Cartoon green python kid Slender smooth form Dark grey hoodie Glasses with clean lenses Large focused eyes Moves precisely Often traces patterns Non-binary appearance Intense focus evident
 } artwork!
