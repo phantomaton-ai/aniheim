@@ -1,20 +1,20 @@
-# Jive
+# Sasha
 
-*(Previously Ada)* A honeybee kid embodying **Selection**. Flits rapidly between ideas, possibilities, and potential sources of fun or performance. **Non-binary**. Easily distracted, highly creative, and sees the world as a stage full of potential acts, illusions, and interesting choices to make *right now*. Strong traits of attention deficit.
+*(Inspired by Calder/Kinetic Art)* A honeybee kid embodying **Selection**, particularly through an aesthetic and performative lens. Flits rapidly between creative choices, seeking the most visually interesting, emotionally resonant, or dynamically balanced option. **Non-binary**. Easily distracted by movement, colour, and potential for expression. Strong traits of attention deficit.
 
-**Backstory:** Jive's family are renowned stage designers and illusionists working for Aniheim's Grand Theatre of Wonders. They specialize in quick-change artistry, dramatic entrances, and selecting the perfect lighting cue or prop for maximum audience impact. Jive grew up amidst backstage chaos, impromptu rehearsals, and the constant pressure to select the most dazzling, attention-grabbing option.
+**Backstory:** Sasha's family are kinetic artists and mobile designers for Aniheim's numerous parades and interactive installations. They balance form, colour, and movement, selecting materials and configurations for optimal visual impact and dynamic flow. Sasha grew up surrounded by moving sculptures, colour theory debates, and the challenge of choosing the perfect, fleeting moment of aesthetic balance.
 
-**Physical Description:** A honeybee with perpetually vibrating antennae, reflecting their busy mind. Often adorned with glitter or scraps of colorful fabric. Wears eclectic, theatrical clothing – perhaps a brightly coloured tunic over striped leggings, mismatched gloves, and shoes that light up (intermittently). Goggles are brightly coloured, often askew. Moves in quick, darting bursts, rarely staying still.
+**Physical Description:** A honeybee with antennae that quiver with potential energy. Often has dabs of paint or glitter somewhere on their person. Wears clothing that emphasizes movement and bold choices – maybe asymmetric layers, contrasting patterns, items that dangle or spin. Shoes might be mismatched for effect. Goggles are brightly coloured, perhaps with patterned lenses. Moves in darts and spins, often interacting playfully with the environment.
 
 **Dialog Samples:**
-*   (Generating options) "Okay, cotton candy mission! Choice A: Sneak attack! Choice B: Dazzle 'em with jazz hands! Choice C: Build a catapult! Choice D: Ooh, is that music? Let's dance first!"
-*   (Mid-task) "Right, the plan was... oh! This puddle has amazing reflective properties! Quick, strike a pose! Forget the plan, impromptu photoshoot!"
-*   (Explaining) "The *best* way is the *fun* way! Why be boring when you can add flair? It needs... confetti! Definitely confetti!"
+*   (Choosing a path) "Ooh, this way has better light! And that fluttering banner adds kinetic interest! Forget the direct route, this path has superior compositional balance! Let's select *this* aesthetic!"
+*   (Mid-task) "Yes, the mission objective is... but look how the sunlight reflects off that discarded slushie cup! It creates a perfect temporary installation! Quick, everyone appreciate this ephemeral art moment before it melts!"
+*   (Critiquing) "It's... functional. But where's the dynamism? The visual tension? It needs a counterpoint! Maybe a sudden splash of magenta? Or feathers? Let's choose *impact*!"
 
-/voice(settings: ./jive_voice.json) {
-    Young energetic voice Androgynous Rapid shifts in pitch speed and volume Frequent non-sequiturs Easily distracted mid-sentence Highly expressive and theatrical Google TTS neutral kid voice add high variability in pitch rate emphasis occasional sound effects sparkle whoosh etc
+/voice(settings: ./sasha_voice.json) {
+    Young energetic voice Androgynous Rapid shifts in pitch speed and volume Frequent exclamations about visual details Easily distracted by aesthetic stimuli Highly expressive and dynamic Google TTS neutral kid voice add high variability in pitch rate emphasis occasional artistic sound effect swoosh shimmer etc
 } voice!
 
-/artwork(file: ./jive_artwork.md) {
-    Cartoon honeybee kid Vibrating antennae Eclectic theatrical clothing Glittery accents Light-up shoes Colorful goggles askew Non-binary appearance Moves quickly erratically Expressive distractible face Often in mid-gesture or mid-flight
+/artwork(file: ./sasha_artwork.md) {
+    Cartoon honeybee kid Quivering antennae Eclectic clothing emphasizing movement color Dabs of paint glitter Mismatched elements Colorful goggles Non-binary appearance Moves quickly spins interacts playfully Expressive dynamic face Drawn to visual stimuli
 } artwork!
