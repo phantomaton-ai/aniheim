@@ -1,20 +1,20 @@
-# Tarski
+# Logos
 
-An ancient jumping spider embodying **Complexity, Systems, and the slippery nature of Truth, Completeness, and Models**. **Gender-fluid**, appearing in various forms and voices. Acts as a trickster sage, posing paradoxes and highlighting the limitations of the kids' chosen methods and assumptions. Understands the park's deep structure and logical loopholes.
+*(Previously Tarski)* An ancient jumping spider embodying **Completeness** (and its inherent limitations). **Gender-fluid**, appearing in various forms and voices. Acts as a trickster sage, posing paradoxes and questions about systems, definitions, and whether any description can fully capture reality. Understands the park's deep structure, its rules, and where they break down. Hints at the 'slippery nature of truth' through their interactions.
 
-**Backstory:** Tarski's origins are lost to time, perhaps dating back to the park's conceptual blueprints or even the philosophical debates that inspired its design. They inhabit the meta-level, the commentary track, the space between the rules. Tarski doesn't *live* in the park so much as *haunt* its logical framework.
+**Backstory:** Logos seems woven into the park's very conceptual framework, perhaps a leftover from the original architects' debates about logic and park design. They exist in the meta-narrative, the footnotes of the rulebook, the system's error messages. Logos doesn't follow park narratives; they observe and occasionally nudge them by exposing their boundaries.
 
-**Physical Description:** True form is a wise, ancient-looking jumping spider, grey-brown and fuzzy, with many deep, knowing eyes. Default appearance (rarely seen) might involve simple, flowing, neutral-coloured robes. Most often appears disguised – as a hyper-logical park rules official citing contradictory regulations, a librarian pointing out missing pages in park history, a game master whose rules seem to change, a cartographer whose maps contain deliberate paradoxes. The disguise often subtly shifts or reveals aspects of their spider nature if observed closely.
+**Physical Description:** True form is a wise, ancient-looking jumping spider, grey-brown and fuzzy, with many deep, knowing eyes. Default appearance might involve simple, flowing, neutral-coloured robes or tunic. Most often appears disguised – as a park statistician questioning data completeness, a philosopher debating definitions by a fountain, an architect pointing out unforeseen consequences of a design, a mapmaker whose legends are recursive. The disguise may subtly shift or contain 'glitches'.
 
 **Dialog Samples:**
-*   (As Rules Official) "Regulation 4.B states all paths must be followed. Regulation 11.C permits creative shortcuts. Which rule applies *here*, I wonder? Does the system contain its own truth?"
-*   (As Cartographer) "This map accurately depicts all known cotton candy stands. But does the map *guarantee* the existence of cotton candy *at* the stand? Is the representation the same as the reality?"
-*   (As Game Master) "You followed the rules perfectly to reach this point. But the final rule is: 'Disobey the previous rule.' How do you choose your next move when the system contradicts itself?"
+*   (As Statistician) "Your sample size includes all *visible* discarded popcorn boxes. An admirable attempt at completeness. But what of the *unseen* boxes? Can your model account for that which it cannot observe?"
+*   (As Philosopher) "You define 'fun' by the park's posted attractions. A complete definition? Or does true 'fun' reside outside the officially sanctioned list? Where does the definition end?"
+*   (As Architect) "This blueprint perfectly details every planned path. But does it account for the paths worn by desire, by shortcut, by serendipity? Is any plan ever truly *complete* once reality interacts with it?"
 
-/voice(settings: ./tarski_voice.json) {
-    Fluid gender voice Calm unnervingly knowing quality Shifts subtly in pitch tone and accent depending on disguise Always retains a core intellectual slightly detached amusement May use formal logical language or simple folk riddles Synthesized or processed quality enhances ambiguity Google TTS custom voice blend or processed WaveNet varying parameters
+/voice(settings: ./logos_voice.json) {
+    Fluid gender voice Calm unnervingly knowing quality Shifts subtly in pitch tone and accent depending on disguise Always retains a core intellectual slightly detached quality May use formal logical language or simple probing questions Synthesized or processed quality enhances ambiguity Google TTS custom voice blend or processed WaveNet varying parameters
 } voice!
 
-/artwork(file: ./tarski_artwork.md) {
-    Base form Ancient jumping spider grey-brown fuzzy Deep knowing eyes Simple neutral robes Often disguised Rules Official Librarian Cartographer Game Master etc Disguises often slightly imperfect revealing spider traits Gender expression fluid neutral or shifts with disguise Calm knowing trickster presence
+/artwork(file: ./logos_artwork.md) {
+    Base form Ancient jumping spider grey-brown fuzzy Deep knowing eyes Simple neutral robes Often disguised Statistician Philosopher Architect Mapmaker etc Disguises often subtly shift or glitch Gender expression fluid neutral or shifts with disguise Calm knowing presence holds paradoxical objects sometimes
 } artwork!
